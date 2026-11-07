@@ -11,6 +11,7 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_typography.dart';
 import '../../core/widgets/brand_mark.dart';
+import '../../core/errors/app_failure.dart';
 import '../../core/widgets/live_dot.dart';
 import '../authentication/admin_access_request_model.dart';
 import '../authentication/admin_access_service.dart';
@@ -419,11 +420,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     setState(() => _isUploadingPhoto = true);
     try {
       final bytes = await picked.readAsBytes();
-      final contentType = picked.mimeType ?? _imageContentType(picked.name);
       final url = await _photoService.uploadDoctorPhoto(
         clinicId: clinic.clinicId,
         bytes: bytes,
-        contentType: contentType,
+        fileName: picked.name,
       );
       await _clinicRepository.updateClinic(clinic.clinicId, {
         'doctorPhotoUrl': url,
@@ -433,19 +433,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _clinic = clinic.copyWith(doctorPhotoUrl: url);
       });
       _showMessage('Doctor photo updated for patients.');
-    } catch (error) {
+    } on AppFailure catch (failure) {
       if (!mounted) return;
-      _showMessage('Could not update the doctor photo: $error');
+      _showMessage(failure.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Could not update the doctor photo. Please try again.');
     } finally {
       if (mounted) setState(() => _isUploadingPhoto = false);
     }
-  }
-
-  String _imageContentType(String fileName) {
-    final lower = fileName.toLowerCase();
-    if (lower.endsWith('.png')) return 'image/png';
-    if (lower.endsWith('.webp')) return 'image/webp';
-    return 'image/jpeg';
   }
 
   Widget _buildDoctorPhotoCard(ClinicModel clinic) {

@@ -19,6 +19,11 @@ class ConnectionFailure extends AppFailure {
   const ConnectionFailure(super.message, {super.code});
 }
 
+/// Input that does not meet the documented limits.
+class ValidationFailure extends AppFailure {
+  const ValidationFailure(super.message, {super.code});
+}
+
 /// Authorization or role permission failure.
 class UnauthorizedFailure extends AppFailure {
   const UnauthorizedFailure(super.message, {super.code});
