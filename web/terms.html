@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#002553">
+  <title>Terms of Use · EasyCheck Online</title>
+  <style>
+    :root {
+      --navy: #002553;
+      --green: #006d44;
+      --mint: #8ce8bc;
+      --ink: #0b1c30;
+      --muted: #434750;
+      --line: #dbe3ee;
+      --surface: #f6f8fc;
+      --white: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 88% 4%, rgba(125, 247, 182, 0.20), transparent 26rem),
+        radial-gradient(circle at 4% 90%, rgba(215, 227, 255, 0.65), transparent 28rem),
+        var(--surface);
+      color: var(--ink);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--green); }
+    .shell { width: min(920px, 100%); margin: 0 auto; padding: 22px 18px 64px; }
+    .topbar { display: flex; align-items: center; gap: 12px; padding: 6px 2px 20px; }
+    .mark {
+      width: 46px; height: 46px; border-radius: 13px; background: var(--white);
+      display: grid; place-items: center; overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 37, 83, 0.12);
+    }
+    .mark img { width: 100%; height: 100%; object-fit: contain; }
+    .brand { font-weight: 800; color: var(--navy); letter-spacing: -0.2px; }
+    .brand small { display: block; font-size: 10px; letter-spacing: 1.3px; color: var(--green); font-weight: 700; }
+    .hero {
+      background: linear-gradient(135deg, #041a33 0%, var(--navy) 55%, #0a4a8a 100%);
+      color: #fff; border-radius: 26px; padding: 28px 24px;
+      box-shadow: 0 22px 48px rgba(0, 37, 83, 0.22);
+    }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--mint); text-transform: uppercase; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 5px rgba(140, 232, 188, 0.14); }
+    h1 { margin: 14px 0 10px; font-size: clamp(30px, 6vw, 44px); line-height: 1.1; letter-spacing: -0.8px; }
+    .hero p { margin: 0; max-width: 62ch; color: rgba(255, 255, 255, 0.86); font-size: 15px; }
+    .meta { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #d7f8e7; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14); }
+    .grid { display: grid; gap: 14px; margin-top: 18px; }
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 8px 22px rgba(0, 37, 83, 0.045); }
+    .card h2 { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; font-size: 17px; line-height: 1.35; color: var(--navy); }
+    .num { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: var(--green); background: rgba(0, 109, 68, 0.09); }
+    .card p { margin: 0 0 9px; color: var(--muted); font-size: 14.5px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card ul { margin: 6px 0 0; padding: 0; list-style: none; }
+    .card li { position: relative; padding-left: 16px; margin: 0 0 7px; color: var(--muted); font-size: 14px; }
+    .card li::before { content: ""; position: absolute; left: 0; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+    .note { margin-top: 18px; padding: 18px 20px; border-radius: 18px; background: rgba(0, 109, 68, 0.06); border: 1px solid rgba(0, 109, 68, 0.16); color: var(--muted); font-size: 14px; }
+    .note strong { color: var(--navy); }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13px; color: #fff; background: var(--navy); }
+    .button.secondary { color: var(--navy); background: #fff; border: 1px solid var(--line); }
+    footer { margin-top: 22px; text-align: center; color: #6b7482; font-size: 12px; }
+    footer a { color: #6b7482; }
+    @media (min-width: 720px) {
+      .shell { padding: 30px 26px 80px; }
+      .hero { padding: 38px 36px; }
+      .card { padding: 24px 26px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .dot { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <div class="mark"><img src="icons/Icon-192.png" alt="EasyCheck Online logo"></div>
+      <div class="brand">EasyCheck Online<small>CARE, CONNECTED</small></div>
+    </div>
+
+    <section class="hero">
+      <span class="eyebrow"><span class="dot"></span> The rules of the service</span>
+      <h1>Terms of Use</h1>
+      <p>These terms explain the agreement between you and EasyCheck Online. They cover acceptable use, clinic-staff access, the limits of the service, and how disputes are handled. By using the service, you agree to these terms.</p>
+      <div class="meta">
+        <span class="chip">Last updated 5 November 2026</span>
+        <span class="chip">Please read before using the service</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2><span class="num">1</span> Acceptance of these terms</h2>
+        <p>These Terms of Use govern your access to and use of EasyCheck Online. By creating an account, signing in or using the service, you agree to these terms. If you do not agree, do not use the service.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">2</span> What EasyCheck does</h2>
+        <p>EasyCheck helps patients see clinic availability, live parchi counts and doctor timing, and helps authorised clinic staff manage a queue. EasyCheck is an operational information tool. It is not a hospital, a medical practice, an emergency service or a substitute for professional medical advice, diagnosis or treatment.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">3</span> Who may use the service</h2>
+        <p>You must be old enough to form a binding agreement in your jurisdiction, or use the service with the involvement of a parent or guardian. You must provide accurate account information and use the service only for lawful purposes.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">4</span> Your account and sign-in</h2>
+        <p>You are responsible for activity carried out through your account and for keeping access to your sign-in account secure. Do not share your sign-in credentials or let another person use your session. Tell us promptly if you believe your account has been compromised.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">5</span> Clinic-staff access</h2>
+        <p>Clinic dashboards are available only to staff whose membership or ownership has been verified. Submitting an access request does not grant access. A clinic administrator or authorised reviewer must approve the request before the dashboard opens.</p>
+        <p>You must request access only for a clinic you genuinely work for. Providing false details, impersonating another person or attempting to access another clinic's records is a serious breach of these terms and may result in suspension and legal action.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">6</span> Acceptable use</h2>
+        <ul>
+          <li>Do not attempt to access accounts, clinics or records you are not authorised to use.</li>
+          <li>Do not interfere with the service, probe its security, or introduce malicious code.</li>
+          <li>Do not scrape, copy or resell clinic or patient information.</li>
+          <li>Do not use the service to harass, discriminate against or endanger another person.</li>
+          <li>Do not rely on the service for emergency care. Contact local emergency services or the clinic directly when urgent help is needed.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">7</span> Clinic information and availability</h2>
+        <p>Live counts, doctor availability and timing are supplied by clinics and may change without notice. We work to keep the information accurate and current, but we cannot guarantee that every update is immediate or error-free. Always confirm important details directly with the clinic before travelling or making a health decision.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">8</span> Service changes and downtime</h2>
+        <p>We may add, change, suspend or discontinue parts of the service. We aim to give reasonable notice of material changes, but maintenance, network problems or security incidents may cause temporary unavailability. We do not guarantee uninterrupted access.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">9</span> Intellectual property</h2>
+        <p>The EasyCheck name, logo, interface and content are protected by intellectual-property laws. We grant you a limited, non-exclusive, non-transferable right to use the service for its intended purpose. You may not copy, modify, distribute or create derivative works from the service without written permission, except where the law allows.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">10</span> Third-party services</h2>
+        <p>The service uses trusted third-party providers for sign-in, hosting, security and communications. Their terms and privacy notices may also apply. We are not responsible for third-party services that we do not control, but we choose providers with appropriate safeguards.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">11</span> Disclaimers</h2>
+        <p>To the maximum extent permitted by law, the service is provided "as is" and "as available". We disclaim implied warranties of merchantability, fitness for a particular purpose and non-infringement. Nothing in these terms excludes a warranty or right that cannot lawfully be excluded.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">12</span> Limitation of liability</h2>
+        <p>To the maximum extent permitted by law, EasyCheck is not liable for indirect, incidental, special or consequential loss, or for loss of data, profits or goodwill arising from your use of the service. Our total liability for a claim relating to the service will not exceed the amount you paid us for the service in the 12 months before the claim, or the minimum amount required by law. Nothing in these terms limits liability for fraud, wilful misconduct or death or personal injury caused by negligence where the law does not allow it.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">13</span> Suspension and termination</h2>
+        <p>We may suspend or terminate access if you breach these terms, if we are required to do so by law, or if your use creates a security or safety risk. You may stop using the service at any time. Provisions that by their nature should survive termination, including ownership, disclaimers and liability limits, will continue to apply.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">14</span> Governing law and disputes</h2>
+        <p>These terms are governed by the laws applicable in the jurisdiction where the service is provided, without regard to conflict-of-law rules. Before starting formal proceedings, please contact us so we can try to resolve the issue informally. Nothing in this section prevents you from using a mandatory consumer-protection process available in your country.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">15</span> Changes to these terms</h2>
+        <p>We may update these terms to reflect changes to the service or the law. The updated version will show a new date at the top. If a change materially affects your rights, we will provide clear notice before it takes effect. Continued use after the effective date means you accept the updated terms.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="num">16</span> Contact</h2>
+        <p>For questions about these terms, contact the EasyCheck support channel shown on the app listing or speak to your clinic administrator.</p>
+        <p><a href="mailto:bipulkumarsiwan6262@gmail.com">bipulkumarsiwan6262@gmail.com</a></p>
+        <div class="actions">
+          <a class="button" href="privacy.html">Read the Privacy Policy</a>
+          <a class="button secondary" href="delete-account.html">Delete your account</a>
+        </div>
+      </section>
+    </div>
+
+    <div class="note">
+      <strong>Medical emergencies:</strong> EasyCheck does not provide emergency care. If you need urgent help, contact your local emergency number or go to the nearest emergency department.
+    </div>
+
+    <footer>
+      EasyCheck Online · Terms of Use · Last updated 5 November 2026<br>
+      <a href="privacy.html">Privacy Policy</a> · <a href="delete-account.html">Delete account</a>
+    </footer>
+  </main>
+</body>
+</html>

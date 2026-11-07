@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "1085858861836",
+    "firebase_url": "https://easycheck-online-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "easycheck-online",
+    "storage_bucket": "easycheck-online.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1085858861836:android:f6c366f51fe48bac61ef29",
+        "android_client_info": {
+          "package_name": "com.easycheck.online.easycheck_online"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1085858861836-ennalcces4h77v9g2f2i23f8ve9eh5hm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easycheck.online.easycheck_online",
+            "certificate_hash": "d712df8904c7de09d3cd2dc80ac6378527f1c431"
+          }
+        },
+        {
+          "client_id": "1085858861836-oq3b6r9jbblcecv7o269vqk5p2g1ij7e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easycheck.online.easycheck_online",
+            "certificate_hash": "65b462ea699e65f720ff75b06ae59beeddd51a57"
+          }
+        },
+        {
+          "client_id": "1085858861836-4jc9tuhipf15bv0h2cq71530qra11i5g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdsNd9BbNjnyVS0p-m-5hMnRf0GYcqGx8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1085858861836-4jc9tuhipf15bv0h2cq71530qra11i5g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

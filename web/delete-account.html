@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#002553">
+  <title>Delete your account · EasyCheck Online</title>
+  <style>
+    :root { --navy:#002553; --green:#006d44; --mint:#8ce8bc; --ink:#0b1c30; --muted:#434750; --line:#dbe3ee; --surface:#f6f8fc; --white:#fff; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; color: var(--ink); line-height: 1.65;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at 88% 4%, rgba(125,247,182,.20), transparent 26rem), radial-gradient(circle at 4% 90%, rgba(215,227,255,.65), transparent 28rem), var(--surface);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--green); }
+    .shell { width: min(820px,100%); margin: 0 auto; padding: 22px 18px 64px; }
+    .topbar { display: flex; align-items: center; gap: 12px; padding: 6px 2px 20px; }
+    .mark { width: 46px; height: 46px; border-radius: 13px; background: var(--white); display: grid; place-items: center; overflow: hidden; box-shadow: 0 8px 24px rgba(0,37,83,.12); }
+    .mark img { width: 100%; height: 100%; object-fit: contain; }
+    .brand { font-weight: 800; color: var(--navy); letter-spacing: -.2px; }
+    .brand small { display: block; font-size: 10px; letter-spacing: 1.3px; color: var(--green); font-weight: 700; }
+    .hero { background: linear-gradient(135deg,#041a33 0%,var(--navy) 55%,#0a4a8a 100%); color: #fff; border-radius: 26px; padding: 28px 24px; box-shadow: 0 22px 48px rgba(0,37,83,.22); }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--mint); text-transform: uppercase; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); }
+    h1 { margin: 14px 0 10px; font-size: clamp(30px,6vw,42px); line-height: 1.1; letter-spacing: -.8px; }
+    .hero p { margin: 0; max-width: 62ch; color: rgba(255,255,255,.86); font-size: 15px; }
+    .grid { display: grid; gap: 14px; margin-top: 18px; }
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 8px 22px rgba(0,37,83,.045); }
+    .card h2 { margin: 0 0 10px; font-size: 17px; color: var(--navy); }
+    .card p { margin: 0 0 9px; color: var(--muted); font-size: 14.5px; }
+    .card p:last-child { margin-bottom: 0; }
+    ol { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 14.5px; }
+    li { margin-bottom: 8px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 18px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 13.5px; color: #fff; background: var(--navy); }
+    .button.secondary { color: var(--navy); background: #fff; border: 1px solid var(--line); }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .note { margin-top: 18px; padding: 18px 20px; border-radius: 18px; background: rgba(0,109,68,.06); border: 1px solid rgba(0,109,68,.16); color: var(--muted); font-size: 14px; }
+    .note strong { color: var(--navy); }
+    footer { margin-top: 22px; text-align: center; color: #6b7482; font-size: 12px; }
+    footer a { color: #6b7482; }
+    @media (min-width: 720px) { .shell { padding: 30px 26px 80px; } .hero { padding: 38px 36px; } .card { padding: 24px 26px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <div class="mark"><img src="icons/Icon-192.png" alt="EasyCheck Online logo"></div>
+      <div class="brand">EasyCheck Online<small>CARE, CONNECTED</small></div>
+    </div>
+
+    <section class="hero">
+      <span class="eyebrow"><span class="dot"></span> Your account, your choice</span>
+      <h1>Delete your account</h1>
+      <p>You can permanently delete your EasyCheck patient account from inside the app. This page explains what is removed, what may be retained, and how to ask for help if you cannot sign in.</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Delete from inside the app</h2>
+        <ol>
+          <li>Open EasyCheck Online and sign in with the account you want to delete.</li>
+          <li>Go to <strong>Settings</strong> using the bottom navigation.</li>
+          <li>Tap <strong>Delete account</strong> and confirm the warning.</li>
+          <li>The app removes your patient profile and signs you out. This cannot be undone.</li>
+        </ol>
+        <div class="actions">
+          <a class="button" href="index.html">Open EasyCheck Online</a>
+          <a class="button secondary" href="privacy.html">Read the Privacy Policy</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>What is deleted</h2>
+        <p>Your patient profile, including your display name, email address, profile photo link and patient role, is deleted. The sign-in link between this app and your sign-in account is also removed, so the account no longer opens the patient portal through EasyCheck.</p>
+      </section>
+
+      <section class="card">
+        <h2>What may be retained</h2>
+        <p>Clinic queue and audit records may be retained for a limited operational period where required for clinic safety, fraud prevention, legal obligations or security investigations. These records are not used to sign you in and are not shown in the patient portal after deletion.</p>
+        <p>If you are clinic staff, your clinic membership is managed separately. Contact your clinic administrator or the EasyCheck support channel to arrange offboarding.</p>
+      </section>
+
+      <section class="card">
+        <h2>Cannot sign in?</h2>
+        <p>If you cannot access the app, email the EasyCheck support channel from the address linked to your account and ask for account deletion. We may need to verify that you own the account before acting. We aim to respond within 30 days.</p>
+        <p><a href="mailto:bipulkumarsiwan6262@gmail.com?subject=EasyCheck%20account%20deletion%20request">bipulkumarsiwan6262@gmail.com</a></p>
+      </section>
+    </div>
+
+    <div class="note">
+      <strong>Need urgent medical help?</strong> EasyCheck is not an emergency service. Contact your local emergency number or the nearest emergency department.
+    </div>
+
+    <footer>
+      EasyCheck Online · Account deletion · Last updated 5 November 2026<br>
+      <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Use</a>
+    </footer>
+  </main>
+</body>
+</html>

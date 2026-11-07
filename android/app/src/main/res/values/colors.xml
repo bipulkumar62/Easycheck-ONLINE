@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Adaptive launcher icon background. Kept white to match the EasyCheck
+         logo mark, which is drawn on a white plate for both patient and
+         clinic-admin surfaces. -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

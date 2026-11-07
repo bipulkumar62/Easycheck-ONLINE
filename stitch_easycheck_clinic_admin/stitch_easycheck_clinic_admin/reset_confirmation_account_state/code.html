@@ -1,0 +1,315 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><title>EasyCheck Admin</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary-fixed-dim": "#aac7ff", "secondary-container": "#94b9fe", "outline-variant": "#bccabf", "secondary-fixed": "#d7e3ff", "error": "#ba1a1a", "tertiary": "#535f59", "surface-dim": "#ccdbf3", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "surface": "#f8f9ff", "primary-container": "#008655", "on-primary-fixed": "#002111", "primary-fixed-dim": "#62dd9e", "surface-bright": "#f8f9ff", "primary": "#006a42", "surface-container-low": "#eff4ff", "surface-variant": "#d5e3fc", "inverse-primary": "#62dd9e", "on-tertiary-fixed-variant": "#3e4944", "inverse-surface": "#233144", "on-primary": "#ffffff", "on-secondary": "#ffffff", "tertiary-fixed-dim": "#bdcac2", "on-surface-variant": "#3d4a41", "background": "#f8f9ff", "on-secondary-fixed-variant": "#1a4683", "on-tertiary-fixed": "#131e19", "inverse-on-surface": "#eaf1ff", "on-primary-container": "#f6fff6", "on-primary-fixed-variant": "#005232", "on-secondary-container": "#1d4886", "on-secondary-fixed": "#001b3e", "surface-container": "#e6eeff", "on-tertiary": "#ffffff", "on-tertiary-container": "#f5fff8", "primary-fixed": "#80fab9", "tertiary-fixed": "#d9e6de", "on-error-container": "#93000a", "on-error": "#ffffff", "tertiary-container": "#6b7771", "on-surface": "#0d1c2e", "secondary": "#375e9d", "on-background": "#0d1c2e", "surface-tint": "#006d44", "outline": "#6d7a70", "surface-container-highest": "#d5e3fc", "surface-container-high": "#dce9ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xs": "0.25rem", "margin-tablet": "1.5rem", "space-lg": "1.5rem", "gutter-desktop": "2rem", "gutter": "1rem", "space-sm": "0.5rem", "space-xl": "2rem", "margin": "1rem", "space-md": "1rem", "gutter-tablet": "1.5rem", "margin-desktop": "2.5rem" }, "fontFamily": { "body-sm": ["Inter"], "body-md": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "label-sm": ["Inter"], "label-md": ["Inter"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-lg": ["Inter"] }, "fontSize": { "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}], "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}], "headline-xl-mobile": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700"}], "headline-sm": ["16px", {"lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600"}], "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700"}], "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}], "headline-lg-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}], "headline-md": ["20px", {"lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}], "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}] } } } }</script></head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(7,59,120,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><img alt="EasyCheck Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1X3l5buskUI26MCSG0msv0l40HhrrsRLQ0QCA2vvolKgV21-s9B0xkw9LfXhSCj7E_Dqtxg4CI1JBqyA2cxsnaBXO4IpBx323kEUNrDyI8nIh8qhzxQc3QloQ0d7J2o1N7h79s1JFTU10rp_LrpS-sBniqLI8WYpDjsW8-WC4hHd2YxroRRHzXDX8Jgj7YXohG5YOPMGIhY4b3sw5g1t0A3P_7S9xL_hM4FaAgNqdwcTQ"><div class="flex flex-col min-w-0"><div class="flex items-center gap-1"><span class="font-label-sm text-label-sm uppercase tracking-wider text-primary">Clinic Admin</span><span class="text-[10px] text-tertiary">•</span><span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">EasyCheck Admin</span></div><span class="font-headline-sm text-headline-sm text-on-surface truncate leading-tight">Apex Care Polyclinic</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Signed-in profile options and logout" class="w-11 h-11 flex items-center justify-center rounded-full active:scale-95 transition-transform" type="button"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_4px_rgba(7,59,120,0.12)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7WvlN35T1eSzt05t8hl1O6gx25tL5OSNzibqwt3j_FE70apiBkx6z-m-YweSaq9O7fR6_bbBbuyB-YByT7HE676ZsTFFbDiF5cejmFvCcAXaufIEg9ycz2ssMcrPqmxJeHRam6-8Qj4E2ym1p58I6pCikazzpGWT_W5mFq4Fgh3tvd4NDAZeFyoYkE6UAjQ-2-1SwG3G3bprjDTAvPrnUrjFIeOIvZpmGplEoLsCn"></button></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full relative">
+<!-- Controls & Scenario Selector Toolbar -->
+<section class="px-margin pt-space-sm pb-space-xs z-30">
+<div class="bg-surface-container-high rounded-full p-1 flex items-center justify-between shadow-sm">
+<button class="flex-1 py-2 px-3 rounded-full text-center font-label-md text-label-md transition-all bg-surface-container-lowest text-on-surface shadow-xs active:scale-95 flex items-center justify-center gap-1" id="btn-show-modal" type="button">
+<span class="material-symbols-outlined text-[16px] text-error">restart_alt</span>
+<span class="">Reset Dialog</span>
+</button>
+<button class="flex-1 py-2 px-3 rounded-full text-center font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface active:scale-95 flex items-center justify-center gap-1" id="btn-show-toast" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">notifications_active</span>
+<span class="">Feedback</span>
+</button>
+<button class="flex-1 py-2 px-3 rounded-full text-center font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface active:scale-95 flex items-center justify-center gap-1" id="btn-show-drawer" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary">badge</span>
+<span class="">Staff Audit</span>
+</button>
+</div>
+</section>
+<!-- Ambient Underlay / Base Live Dashboard View (Subtly Dimmed Foundation) -->
+<div class="px-margin space-y-space-md py-space-sm transition-all duration-300 filter" id="dashboard-underlay">
+<!-- Quick Status Pill Banner -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative flex-shrink-0">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-headline-sm text-headline-sm">
+            RS
+          </div>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1">
+<span class="font-headline-sm text-headline-sm truncate text-on-surface">Dr. Rajesh Sharma</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">General OPD • Room 04</span>
+</div>
+</div>
+<div class="flex items-center gap-1 px-3 py-1 bg-surface-container-low rounded-full">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-primary uppercase">Available</span>
+</div>
+</div>
+<!-- Parchi Live Counter Card (Apex Polyclinic Operational Token) -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">confirmation_number</span>
+<span class="font-label-lg text-label-lg text-on-surface font-semibold tracking-wide">Today's Token Tally</span>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium">Session Active</span>
+</div>
+<div class="flex items-baseline justify-between py-2">
+<div class="flex items-baseline gap-2">
+<span class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold" id="parchi-live-count">12</span>
+<span class="font-body-md text-body-md text-on-surface-variant">parchis issued</span>
+</div>
+<div class="flex items-center gap-1.5 text-primary bg-surface-container-low px-2.5 py-1 rounded-xl">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="font-label-md text-label-md font-semibold">+3 / hr</span>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="grid grid-cols-2 gap-2 mt-space-md pt-space-xs">
+<button class="h-12 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-1 shadow-sm active:scale-95 transition-transform" id="btn-quick-increment" type="button">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span class="">Issue Next (13)</span>
+</button>
+<button class="h-12 bg-surface-container-high text-on-surface rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-1 active:scale-95 transition-transform" id="btn-trigger-reset-flow" type="button">
+<span class="material-symbols-outlined text-[18px] text-error">restart_alt</span>
+<span class="">Reset Tally</span>
+</button>
+</div>
+<!-- Subtle Audit Stamp -->
+<div class="mt-space-md pt-space-sm flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm text-label-sm flex items-center gap-1 text-tertiary">
+<span class="material-symbols-outlined text-[14px]">history</span> Last parchi issued: 10:38 AM (#012)
+        </span>
+<span class="font-label-sm text-label-sm text-secondary font-medium">Auto-Sync ON</span>
+</div>
+</div>
+<!-- Active Clinic Triage Queue Preview -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">In Waiting Area (3)</span>
+<span class="font-label-sm text-label-sm text-secondary">Est. 18m wait</span>
+</div>
+<!-- Patient Snippet 1 -->
+<div class="bg-surface-container-low rounded-xl p-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface font-headline-sm text-headline-sm">
+            10
+          </div>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface leading-tight">Meera Patel</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Follow-up BP Check • Dr. Rajesh</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">With Doctor</span>
+</div>
+<!-- Patient Snippet 2 -->
+<div class="bg-surface-container-low rounded-xl p-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface font-headline-sm text-headline-sm">
+            11
+          </div>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface leading-tight">Harshavardhan Rao</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">General Viral Consult • Waiting 8m</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant">Next Up</span>
+</div>
+</div>
+</div>
+<!-- FLOATING FEEDBACK TOAST STACK (Non-blocking notification system) -->
+
+<!-- ACTIVE MODAL: RESET CONFIRMATION DIALOG -->
+<div class="fixed inset-0 z-40 bg-on-surface/40 backdrop-blur-md flex items-center justify-center p-margin transition-opacity duration-200" id="reset-modal-backdrop">
+<div class="w-full max-w-sm bg-surface-container-lowest rounded-3xl p-space-lg shadow-2xl relative flex flex-col gap-space-md animate-in fade-in zoom-in-95 duration-150"><div class="flex flex-col items-center text-center pt-2"><div class="w-14 h-14 rounded-2xl bg-error-container/60 flex items-center justify-center text-error mb-space-sm shadow-inner"><span class="material-symbols-outlined text-[32px]">restart_alt</span></div><h2 class="font-headline-md text-headline-md text-on-surface font-bold">Reset today’s count?</h2><p class="font-body-md text-body-md text-on-surface-variant mt-2">This will reset the parchi tally for <strong class="text-on-surface font-semibold">Apex Care Polyclinic</strong> back to 0.</p><div class="mt-space-md inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error-container text-on-error-container font-label-md text-label-md font-semibold"><span class="material-symbols-outlined text-[16px]">confirmation_number</span><span class="">12 issued today</span></div></div><div class="flex flex-col gap-2.5 pt-1"><button class="w-full h-[52px] bg-error text-on-error rounded-2xl font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 shadow-md hover:opacity-95 active:scale-[0.98] transition-all" id="btn-confirm-reset" type="button"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="">Confirm Reset to 0</span></button><button class="w-full h-12 bg-surface-container-high text-on-surface rounded-2xl font-label-lg text-label-lg font-medium flex items-center justify-center hover:bg-surface-container-highest active:scale-[0.98] transition-all" id="btn-cancel-reset" type="button"><span class="">Cancel</span></button></div></div>
+</div>
+<!-- ACCOUNT & AUDIT DRAWER (Pop-up Staff Profile View) -->
+<div class="fixed inset-0 z-40 bg-on-surface/40 backdrop-blur-sm flex items-end justify-center transition-all duration-300 opacity-0 pointer-events-none" id="account-drawer-backdrop">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-t-3xl p-space-lg shadow-2xl space-y-space-md transform translate-y-full transition-transform duration-300" id="account-drawer-content">
+<!-- Drawer Drag Handle -->
+<div class="w-12 h-1.5 rounded-full bg-surface-variant mx-auto mb-1"></div>
+<!-- Staff Identity Header -->
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 rounded-2xl bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-headline-md text-headline-md flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[32px]">shield_person</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">Front Desk Lead</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm uppercase">Active</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary font-mono truncate">reception.apex@easycheck.med</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Assigned to: Apex Care Polyclinic</p>
+</div>
+</div>
+<!-- Audit Metadata & Security Summary -->
+<div class="bg-surface-container-low rounded-2xl p-space-md space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Session Auth Protocol</span>
+<span class="font-label-md text-label-md text-on-surface font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">verified_user</span> Google OAuth 2.0
+          </span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Daily Reset Permissions</span>
+<span class="font-label-md text-label-md text-primary font-semibold">Granted (Lead Tier)</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Last Audit Checkpoint</span>
+<span class="font-label-md text-label-md text-on-surface">Today, 08:30 AM IST</span>
+</div>
+</div>
+<!-- Audit Quick Log Actions -->
+<div class="grid grid-cols-2 gap-2">
+<button class="p-3 bg-surface-container-high rounded-xl text-left hover:bg-surface-variant transition-colors" type="button">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md mb-1">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span> Audit Activity
+          </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">View 18 shift actions</p>
+</button>
+<button class="p-3 bg-surface-container-high rounded-xl text-left hover:bg-surface-variant transition-colors" type="button">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md mb-1">
+<span class="material-symbols-outlined text-[16px]">print</span> Reprint Slip
+          </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Bluetooth Desk Printer</p>
+</button>
+</div>
+<!-- Sign Out / Exit Flow Action -->
+<div class="pt-space-xs flex flex-col gap-2">
+<button class="w-full h-14 bg-error-container text-on-error-container rounded-2xl font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform" id="btn-logout" type="button">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="">Log out of Apex Terminal</span>
+</button>
+<button class="w-full h-11 text-on-surface-variant font-label-md text-label-md text-center active:scale-95" id="btn-close-drawer" type="button">
+          Close Panel
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function initClinicModalStudio() {
+    const modalBackdrop = document.getElementById('reset-modal-backdrop');
+    const drawerBackdrop = document.getElementById('account-drawer-backdrop');
+    const drawerContent = document.getElementById('account-drawer-content');
+    const dashboardUnderlay = document.getElementById('dashboard-underlay');
+    const toastContainer = document.getElementById('toast-container');
+    const parchiLiveCount = document.getElementById('parchi-live-count');
+
+    const btnShowModal = document.getElementById('btn-show-modal');
+    const btnShowToast = document.getElementById('btn-show-toast');
+    const btnShowDrawer = document.getElementById('btn-show-drawer');
+    const btnConfirmReset = document.getElementById('btn-confirm-reset');
+    const btnCancelReset = document.getElementById('btn-cancel-reset');
+    const btnTriggerResetFlow = document.getElementById('btn-trigger-reset-flow');
+    const btnQuickIncrement = document.getElementById('btn-quick-increment');
+    const btnCloseDrawer = document.getElementById('btn-close-drawer');
+    const btnLogout = document.getElementById('btn-logout');
+
+    let currentTokens = 12;
+
+    function setTabState(activeBtn) {
+      [btnShowModal, btnShowToast, btnShowDrawer].forEach(btn => {
+        btn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-xs');
+        btn.classList.add('text-on-surface-variant');
+      });
+      activeBtn.classList.remove('text-on-surface-variant');
+      activeBtn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-xs');
+    }
+
+    function openModal() {
+      modalBackdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+      closeDrawer();
+      setTabState(btnShowModal);
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function openDrawer() {
+      closeModal();
+      drawerBackdrop.classList.remove('opacity-0', 'pointer-events-none');
+      drawerContent.classList.remove('translate-y-full');
+      setTabState(btnShowDrawer);
+    }
+
+    function closeDrawer() {
+      drawerBackdrop.classList.add('opacity-0', 'pointer-events-none');
+      drawerContent.classList.add('translate-y-full');
+    }
+
+    function triggerToasts() {
+      closeModal();
+      closeDrawer();
+      setTabState(btnShowToast);
+      
+      const t1 = document.getElementById('toast-increment');
+      const t2 = document.getElementById('toast-doctor');
+      if (t1) {
+        t1.classList.remove('hidden', 'opacity-0', '-translate-y-4');
+        t1.classList.add('opacity-100', 'translate-y-0');
+      }
+      if (t2) {
+        t2.classList.remove('hidden', 'opacity-0', '-translate-y-4');
+        t2.classList.add('opacity-100', 'translate-y-0');
+      }
+    }
+
+    window.dismissToast = function(id) {
+      const toast = document.getElementById(id);
+      if (toast) {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.classList.add('hidden'), 200);
+      }
+    };
+
+    // Event Bindings
+    btnShowModal.addEventListener('click', openModal);
+    btnTriggerResetFlow.addEventListener('click', openModal);
+    
+    btnCancelReset.addEventListener('click', closeModal);
+    btnConfirmReset.addEventListener('click', () => {
+      currentTokens = 0;
+      parchiLiveCount.textContent = '0';
+      closeModal();
+      
+      // Inject momentary reset audit confirmation banner
+      const toastInc = document.getElementById('toast-increment');
+      if (toastInc) {
+        toastInc.querySelector('p.font-label-md').textContent = 'Parchi tally reset to 0';
+        toastInc.querySelector('p.font-body-sm').textContent = 'Audit logged: reception.apex@easycheck.med';
+        toastInc.classList.remove('hidden', 'opacity-0');
+        toastInc.classList.add('opacity-100', 'translate-y-0');
+      }
+    });
+
+    btnShowToast.addEventListener('click', triggerToasts);
+    btnShowDrawer.addEventListener('click', openDrawer);
+    btnCloseDrawer.addEventListener('click', closeDrawer);
+
+    // Increment simulation
+    btnQuickIncrement.addEventListener('click', () => {
+      currentTokens += 1;
+      parchiLiveCount.textContent = currentTokens;
+      btnQuickIncrement.querySelector('span:last-child').textContent = `Issue Next (${currentTokens + 1})`;
+      
+      const t1 = document.getElementById('toast-increment');
+      if (t1) {
+        t1.querySelector('p.font-label-md').textContent = `Parchi counter incremented to ${currentTokens}`;
+        t1.querySelector('p.font-body-sm').textContent = 'Sync confirmed with Apex Cloud Ledger';
+        t1.classList.remove('hidden', 'opacity-0');
+        t1.classList.add('opacity-100', 'translate-y-0');
+      }
+    });
+
+    // Close drawers on outside backdrop click
+    drawerBackdrop.addEventListener('click', (e) => {
+      if (e.target === drawerBackdrop) closeDrawer();
+    });
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    btnLogout.addEventListener('click', () => {
+      alert('Logging out of Apex Care Polyclinic terminal session. Redirecting to Google Auth...');
+    });
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_8px_rgba(7,59,120,0.04)]" data-active-classes="text-primary font-label-md"><div class="flex justify-around items-center h-16 px-margin"><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 text-on-surface-variant transition-colors active:scale-95" data-path="live-queue" href="#"><span class="material-symbols-outlined text-[22px]">format_list_bulleted</span><span class="font-label-sm text-label-sm">Live Queue</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 text-on-surface-variant transition-colors active:scale-95" data-path="triage-intake" href="#"><span class="material-symbols-outlined text-[22px]">how_to_reg</span><span class="font-label-sm text-label-sm">Intake</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 text-on-surface-variant transition-colors active:scale-95" data-path="practitioners" href="#"><span class="material-symbols-outlined text-[22px]">medical_services</span><span class="font-label-sm text-label-sm">Staff</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 transition-colors active:scale-95 text-primary font-label-md" data-path="admin-profile" href="#"><span class="material-symbols-outlined text-[22px]">manage_accounts</span><span class="font-label-sm text-label-sm">Clinic</span></a></div></nav>
+
+</body></html>

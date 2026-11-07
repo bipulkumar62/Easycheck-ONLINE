@@ -1,0 +1,210 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSignedInAs(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isValidClinicId(clinicId) {
+      return clinicId.matches('^CLN-[0-9]{5}$');
+    }
+
+    function isActiveClinic(clinicId) {
+      return exists(/databases/$(database)/documents/clinics/$(clinicId))
+        && get(/databases/$(database)/documents/clinics/$(clinicId)).data.get('isActive', false) == true;
+    }
+
+    function isActiveMember(uid, clinicId) {
+      return exists(/databases/$(database)/documents/clinic_members/$(uid + '_' + clinicId))
+        && get(/databases/$(database)/documents/clinic_members/$(uid + '_' + clinicId)).data.get('isActive', false) == true;
+    }
+
+    function isClinicAdmin(uid, clinicId) {
+      return isActiveMember(uid, clinicId)
+        && get(/databases/$(database)/documents/clinic_members/$(uid + '_' + clinicId)).data.get('role', '') == 'clinic_admin';
+    }
+
+    // Only an active clinic_admin may manage memberships. Front-desk leads
+    // may operate the queue but may not grant roles.
+    function isClinicManager(uid, clinicId) {
+      return isAuthenticated() && isClinicAdmin(uid, clinicId);
+    }
+
+    // Queue operations are allowed for clinic_admin and front_desk_lead.
+    function canManageClinic(uid, clinicId) {
+      return isAuthenticated() && (
+        isClinicAdmin(uid, clinicId)
+        || (isActiveMember(uid, clinicId)
+          && get(/databases/$(database)/documents/clinic_members/$(uid + '_' + clinicId)).data.get('role', '') == 'front_desk_lead')
+      );
+    }
+
+    function canViewClinic(uid, clinicId) {
+      return isAuthenticated() && isActiveMember(uid, clinicId);
+    }
+
+    // =========================================================================
+    // USERS — document ID is the Firebase Auth UID.
+    // Fields: email, displayName, photoUrl, role, createdAt, updatedAt,
+    //         isActive. There is deliberately no `uid` field.
+    // A client may self-create only a patient profile. Clinic admin access is
+    // never granted by writing this document.
+    // =========================================================================
+
+    match /users/{userId} {
+      allow read: if isSignedInAs(userId);
+
+      allow create: if isSignedInAs(userId)
+        && request.resource.data.role == 'patient'
+        && request.resource.data.isActive == true;
+
+      allow update: if isSignedInAs(userId)
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.isActive == resource.data.isActive;
+
+      // Play Store account-deletion requirement: a patient may delete only
+      // their own profile. Staff profiles are retained for clinic audit and
+      // must be removed through the trusted clinic offboarding process.
+      allow delete: if isSignedInAs(userId)
+        && resource.data.role == 'patient';
+    }
+
+    // =========================================================================
+    // CLINICS - document ID is the clinic ID (CLN-XXXXX).
+    // Patient discovery needs read access for every signed-in user. The
+    // document must never contain a staff identifier or other private field.
+    // Clients cannot create clinics. Only an active clinic_admin may update
+    // clinic content.
+    // =========================================================================
+
+    match /clinics/{clinicId} {
+      allow read: if isAuthenticated();
+
+      allow create: if false;
+
+      allow update: if isAuthenticated()
+        && isClinicAdmin(request.auth.uid, clinicId);
+
+      allow delete: if false;
+    }
+
+    // =========================================================================
+    // CLINIC_MEMBERS — document ID is {userId}_{clinicId}.
+    // Fields: userId, clinicId, role, permissions, isActive, joinedAt,
+    //         assignedBy.
+    // Memberships are provisioned only by trusted tooling (Admin SDK / Super
+    // Admin backend), which bypasses these rules. The applicant client can
+    // never create, activate or elevate its own membership, and no client can
+    // grant admin access without Super Admin approval.
+    // =========================================================================
+
+    match /clinic_members/{membershipId} {
+      allow read: if isAuthenticated() && (
+        resource.data.get('userId', '') == request.auth.uid
+        || isClinicManager(request.auth.uid, resource.data.get('clinicId', ''))
+      );
+
+      allow create, update, delete: if false;
+    }
+
+    // =========================================================================
+    // ADMIN_ACCESS_REQUESTS — document ID is {uid}_{clinicId}.
+    // The applicant may create only a pending request for its own UID and
+    // read only its own requests. Approval/rejection is intentionally denied
+    // to clients; only the trusted Super Admin backend (Admin SDK) can change
+    // status or create clinic memberships.
+    // =========================================================================
+
+    match /admin_access_requests/{requestId} {
+      allow read: if isAuthenticated()
+        && resource.data.get('uid', '') == request.auth.uid;
+
+      allow create: if isAuthenticated()
+        && requestId == request.auth.uid + '_' + request.resource.data.requestedClinicId
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 320
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'email',
+          'displayName',
+          'requestedClinicId',
+          'contactNumber',
+          'status',
+          'createdAt',
+          'updatedAt',
+          'reviewedAt',
+          'reviewedBy',
+          'rejectionReason'
+        ])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 2
+        && request.resource.data.contactNumber is string
+        && request.resource.data.status == 'pending'
+        && isValidClinicId(request.resource.data.requestedClinicId)
+        && isActiveClinic(request.resource.data.requestedClinicId)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.reviewedAt == null
+        && request.resource.data.reviewedBy == null
+        && request.resource.data.rejectionReason == null;
+
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // QUEUE_SESSIONS — document ID is {clinicId}_{YYYY-MM-DD}.
+    // Readable by every signed-in user so patient discovery can show live
+    // parchi counts. Writes require clinic staff membership.
+    // =========================================================================
+
+    match /queue_sessions/{sessionId} {
+      allow read: if isAuthenticated();
+
+      allow create: if canManageClinic(request.auth.uid, request.resource.data.clinicId)
+        && sessionId == request.resource.data.clinicId + '_' + request.resource.data.date
+        && request.resource.data.currentParchaNumber is int
+        && request.resource.data.currentParchaNumber >= 0
+        && request.resource.data.status in ['active', 'paused', 'closed'];
+
+      allow update: if canManageClinic(request.auth.uid, resource.data.clinicId)
+        && request.resource.data.clinicId == resource.data.clinicId
+        && request.resource.data.date == resource.data.date
+        && request.resource.data.currentParchaNumber is int
+        && request.resource.data.currentParchaNumber >= 0
+        && request.resource.data.status in ['active', 'paused', 'closed'];
+
+      allow delete: if false;
+    }
+
+    // =========================================================================
+    // QUEUE_HISTORY — immutable audit trail.
+    // =========================================================================
+
+    match /queue_history/{historyId} {
+      allow read: if isAuthenticated()
+        && canViewClinic(request.auth.uid, resource.data.get('clinicId', ''));
+
+      allow create: if isAuthenticated()
+        && canManageClinic(request.auth.uid, request.resource.data.clinicId)
+        && request.resource.data.performedBy == request.auth.uid
+        && request.resource.data.action in ['increment', 'correction', 'reset'];
+
+      allow update, delete: if false;
+    }
+
+    // Deny anything not explicitly matched above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

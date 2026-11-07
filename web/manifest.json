@@ -1,0 +1,37 @@
+{
+  "name": "EasyCheck Online",
+  "short_name": "EasyCheck",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#F8F9FF",
+  "theme_color": "#002553",
+  "description": "Real-time outpatient and parchi queue tracking for clinics and patients.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "categories": ["medical", "health", "productivity"],
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

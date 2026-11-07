@@ -1,0 +1,13 @@
+{
+  "name": "easycheck-admin-cli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Trusted local operations CLI for EasyCheck Online. Uses the Admin SDK and never ships inside the app.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0"
+  }
+}

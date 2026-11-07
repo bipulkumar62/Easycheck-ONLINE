@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><title>EasyCheck Admin</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary-fixed-dim": "#aac7ff", "secondary-container": "#94b9fe", "outline-variant": "#bccabf", "secondary-fixed": "#d7e3ff", "error": "#ba1a1a", "tertiary": "#535f59", "surface-dim": "#ccdbf3", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "surface": "#f8f9ff", "primary-container": "#008655", "on-primary-fixed": "#002111", "primary-fixed-dim": "#62dd9e", "surface-bright": "#f8f9ff", "primary": "#006a42", "surface-container-low": "#eff4ff", "surface-variant": "#d5e3fc", "inverse-primary": "#62dd9e", "on-tertiary-fixed-variant": "#3e4944", "inverse-surface": "#233144", "on-primary": "#ffffff", "on-secondary": "#ffffff", "tertiary-fixed-dim": "#bdcac2", "on-surface-variant": "#3d4a41", "background": "#f8f9ff", "on-secondary-fixed-variant": "#1a4683", "on-tertiary-fixed": "#131e19", "inverse-on-surface": "#eaf1ff", "on-primary-container": "#f6fff6", "on-primary-fixed-variant": "#005232", "on-secondary-container": "#1d4886", "on-secondary-fixed": "#001b3e", "surface-container": "#e6eeff", "on-tertiary": "#ffffff", "on-tertiary-container": "#f5fff8", "primary-fixed": "#80fab9", "tertiary-fixed": "#d9e6de", "on-error-container": "#93000a", "on-error": "#ffffff", "tertiary-container": "#6b7771", "on-surface": "#0d1c2e", "secondary": "#375e9d", "on-background": "#0d1c2e", "surface-tint": "#006d44", "outline": "#6d7a70", "surface-container-highest": "#d5e3fc", "surface-container-high": "#dce9ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xs": "0.25rem", "margin-tablet": "1.5rem", "space-lg": "1.5rem", "gutter-desktop": "2rem", "gutter": "1rem", "space-sm": "0.5rem", "space-xl": "2rem", "margin": "1rem", "space-md": "1rem", "gutter-tablet": "1.5rem", "margin-desktop": "2.5rem" }, "fontFamily": { "body-sm": ["Inter"], "body-md": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "label-sm": ["Inter"], "label-md": ["Inter"], "headline-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-lg": ["Inter"] }, "fontSize": { "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}], "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}], "headline-xl-mobile": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700"}], "headline-sm": ["16px", {"lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600"}], "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700"}], "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}], "headline-lg-mobile": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}], "headline-md": ["20px", {"lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}], "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}] } } } }</script></head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(7,59,120,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-xs"><button aria-label="Go back" class="w-11 h-11 -ml-2 flex items-center justify-center text-on-surface rounded-full active:scale-95 transition-transform" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="EasyCheck Logo" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1X3l5buskUI26MCSG0msv0l40HhrrsRLQ0QCA2vvolKgV21-s9B0xkw9LfXhSCj7E_Dqtxg4CI1JBqyA2cxsnaBXO4IpBx323kEUNrDyI8nIh8qhzxQc3QloQ0d7J2o1N7h79s1JFTU10rp_LrpS-sBniqLI8WYpDjsW8-WC4hHd2YxroRRHzXDX8Jgj7YXohG5YOPMGIhY4b3sw5g1t0A3P_7S9xL_hM4FaAgNqdwcTQ"><h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight truncate leading-tight">Patient Triage Detail</h1></div><div class="flex items-center"><button aria-label="Admin profile" class="w-11 h-11 flex items-center justify-center rounded-full active:scale-95 transition-transform" type="button"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_1px_4px_rgba(7,59,120,0.12)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7WvlN35T1eSzt05t8hl1O6gx25tL5OSNzibqwt3j_FE70apiBkx6z-m-YweSaq9O7fR6_bbBbuyB-YByT7HE676ZsTFFbDiF5cejmFvCcAXaufIEg9ycz2ssMcrPqmxJeHRam6-8Qj4E2ym1p58I6pCikazzpGWT_W5mFq4Fgh3tvd4NDAZeFyoYkE6UAjQ-2-1SwG3G3bprjDTAvPrnUrjFIeOIvZpmGplEoLsCn"></button></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-surface"><div class="flex flex-col w-full pb-8">
+<div class="px-gutter pt-space-md flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm bg-surface-container-high px-3 py-1.5 rounded-full">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface uppercase tracking-wider">Clinic Admin Portal</span>
+</div>
+<div class="flex items-center gap-2">
+<img alt="EasyCheck Logo" class="w-7 h-7 object-contain rounded-md shadow-sm" src="https://lh3.googleusercontent.com/aida/AEtjO1X3l5buskUI26MCSG0msv0l40HhrrsRLQ0QCA2vvolKgV21-s9B0xkw9LfXhSCj7E_Dqtxg4CI1JBqyA2cxsnaBXO4IpBx323kEUNrDyI8nIh8qhzxQc3QloQ0d7J2o1N7h79s1JFTU10rp_LrpS-sBniqLI8WYpDjsW8-WC4hHd2YxroRRHzXDX8Jgj7YXohG5YOPMGIhY4b3sw5g1t0A3P_7S9xL_hM4FaAgNqdwcTQ">
+<span class="font-headline-sm text-headline-sm text-secondary font-bold tracking-tight">EasyCheck</span>
+</div>
+</div>
+
+<div class="relative bg-surface-container-lowest rounded-2xl p-space-lg shadow-md overflow-hidden">
+<div class="absolute -right-10 -top-10 w-36 h-36 bg-surface-container-low rounded-full opacity-60 pointer-events-none"></div>
+<div class="relative flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-2xl bg-surface-container-low flex items-center justify-center mb-space-md shadow-sm">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[30px]" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm uppercase mb-space-sm">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+          Permissions Required
+        </span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-secondary font-bold tracking-tight">
+          Access Not Authorized
+        </h2>
+<p class="font-body-md text-body-md text-tertiary mt-space-xs max-w-xs leading-relaxed">
+          Your Google account <strong class="text-on-surface font-semibold">dr.guest@gmail.com</strong> was successfully authenticated, but has not been assigned as an authorized administrator for any clinic.
+        </p>
+
+</div>
+</div>
+
+
+<div class="pt-space-xs flex flex-col gap-space-sm">
+<button class="w-full h-14 rounded-2xl bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-all" onclick="handleSwitchAccount()">
+<span class="material-symbols-outlined text-[20px]">switch_account</span>
+<span class="">Switch Google Account</span>
+</button>
+<button class="w-full h-12 rounded-2xl bg-surface-container-highest text-secondary font-headline-sm text-headline-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all" onclick="handleRequestAccess()">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+<span class="">Request Clinic Access</span>
+</button>
+
+</div>
+</div>
+<div class="fixed bottom-6 left-4 right-4 z-50 bg-inverse-surface text-inverse-on-surface p-space-sm rounded-xl shadow-lg flex items-center justify-between opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2" id="toastNotification">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-inverse-primary text-[20px]">sync</span>
+<span class="font-label-md text-label-md" id="toastMessage">Re-authenticating permissions...</span>
+</div>
+<span class="font-label-sm text-label-sm text-inverse-primary font-mono">200 OK</span>
+</div>
+</div>
+<script>
+  function triggerRetryAnimation() {
+    const icon = document.getElementById('retryIcon');
+    const text = document.getElementById('retryText');
+    const toast = document.getElementById('toastNotification');
+    const toastMsg = document.getElementById('toastMessage');
+
+    icon.classList.add('animate-spin');
+    text.textContent = 'Contacting...';
+
+    setTimeout(() => {
+      icon.classList.remove('animate-spin');
+      text.textContent = 'Retry Connection';
+      
+      toastMsg.textContent = 'RBAC checked: Still unassigned for dr.guest@gmail.com';
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 3500);
+    }, 1200);
+  }
+
+  function dismissBanner() {
+    const banner = document.getElementById('retryBanner');
+    banner.style.opacity = '0';
+    banner.style.transform = 'translateY(-10px)';
+    setTimeout(() => banner.remove(), 250);
+  }
+
+  function handleSwitchAccount() {
+    const toast = document.getElementById('toastNotification');
+    const toastMsg = document.getElementById('toastMessage');
+    toastMsg.textContent = 'Redirecting to Google Sign-In selector...';
+    toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1200);
+  }
+
+  function handleRequestAccess() {
+    const toast = document.getElementById('toastNotification');
+    const toastMsg = document.getElementById('toastMessage');
+    toastMsg.textContent = 'Ticket #REQ-883 sent to Super-Admin team!';
+    toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toast.classList.remove('opacity-100', 'translate-y-0');
+    }, 4000);
+  }
+</script></main>
+
+</body></html>
