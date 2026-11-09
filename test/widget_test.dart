@@ -49,14 +49,13 @@ void main() {
       expect(find.text('Continue as Doctor/Staff'), findsOneWidget);
     });
 
-    testWidgets('patient role opens the patient Google login',
-        (WidgetTester tester) async {
+    testWidgets('patient role opens the patient Google login', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EasyCheckApp());
       await tester.pump(const Duration(milliseconds: 500));
 
-      await tester.ensureVisible(
-        find.byKey(const Key('role_patient_button')),
-      );
+      await tester.ensureVisible(find.byKey(const Key('role_patient_button')));
       await tester.pump();
       await tester.tap(find.byKey(const Key('role_patient_button')));
       await tester.pump();
@@ -66,14 +65,13 @@ void main() {
       expect(find.text('OFFICIAL PATIENT PORTAL'), findsOneWidget);
     });
 
-    testWidgets('doctor/staff role opens the clinic admin Google login',
-        (WidgetTester tester) async {
+    testWidgets('doctor/staff role opens the clinic admin Google login', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(const EasyCheckApp());
       await tester.pump(const Duration(milliseconds: 500));
 
-      await tester.ensureVisible(
-        find.byKey(const Key('role_admin_button')),
-      );
+      await tester.ensureVisible(find.byKey(const Key('role_admin_button')));
       await tester.pump();
       await tester.tap(find.byKey(const Key('role_admin_button')));
       await tester.pump();
@@ -83,8 +81,9 @@ void main() {
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
-    testWidgets('role selection has no overflow at 320px width',
-        (WidgetTester tester) async {
+    testWidgets('role selection has no overflow at 320px width', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(320, 640);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -105,22 +104,25 @@ void main() {
   });
 
   group('Patient experience', () {
-    testWidgets('patient home renders discovery header and registered clinics',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.patientTheme,
-          home: const PatientHomeScreen(),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 500));
+    testWidgets(
+      'patient home renders discovery header and registered clinics',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.patientTheme,
+            home: const PatientHomeScreen(),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Registered Clinics'), findsOneWidget);
-      expect(find.text('Lahore, Punjab'), findsOneWidget);
-    });
+        expect(find.text('Registered Clinics'), findsOneWidget);
+        expect(find.text('India'), findsOneWidget);
+      },
+    );
 
-    testWidgets('clinic details renders the parchi card and doctor timing',
-        (WidgetTester tester) async {
+    testWidgets('clinic details renders the parchi card and doctor timing', (
+      WidgetTester tester,
+    ) async {
       const testClinic = ClinicModel(
         id: 'CLN-001',
         name: 'Al-Shifa Family Health Clinic',
@@ -151,8 +153,9 @@ void main() {
       expect(find.text('Mon–Sat · 9:00 AM – 5:00 PM'), findsOneWidget);
     });
 
-    testWidgets('patient home has no overflow at 320px width',
-        (WidgetTester tester) async {
+    testWidgets('patient home has no overflow at 320px width', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(320, 640);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -170,8 +173,9 @@ void main() {
       expect(find.text('Registered Clinics'), findsOneWidget);
     });
 
-    testWidgets('patient home lays out on tablet widths',
-        (WidgetTester tester) async {
+    testWidgets('patient home lays out on tablet widths', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(1024, 768);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -191,13 +195,11 @@ void main() {
   });
 
   group('Clinic admin experience', () {
-    testWidgets('admin login renders clinic admin title and Google button',
-        (WidgetTester tester) async {
+    testWidgets('admin login renders clinic admin title and Google button', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.adminTheme,
-          home: const AdminLoginScreen(),
-        ),
+        MaterialApp(theme: AppTheme.adminTheme, home: const AdminLoginScreen()),
       );
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -205,8 +207,9 @@ void main() {
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
-    testWidgets('admin dashboard fails closed without authorization',
-        (WidgetTester tester) async {
+    testWidgets('admin dashboard fails closed without authorization', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.adminTheme,
@@ -220,8 +223,9 @@ void main() {
       expect(find.text('Retry'), findsOneWidget);
     });
 
-    testWidgets('access request form requires a signed-in account',
-        (WidgetTester tester) async {
+    testWidgets('access request form requires a signed-in account', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.adminTheme,
@@ -234,8 +238,9 @@ void main() {
       expect(find.text('Back to role selection'), findsOneWidget);
     });
 
-    testWidgets('request submitted screen handles missing navigation payload',
-        (WidgetTester tester) async {
+    testWidgets('request submitted screen handles missing navigation payload', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.adminTheme,
@@ -248,8 +253,9 @@ void main() {
       expect(find.text('Open access request'), findsOneWidget);
     });
 
-    testWidgets('pending approval screen shows a pending state',
-        (WidgetTester tester) async {
+    testWidgets('pending approval screen shows a pending state', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.adminTheme,
@@ -263,8 +269,9 @@ void main() {
       expect(find.text('Sign out'), findsOneWidget);
     });
 
-    testWidgets('rejected screen shows a not-approved state',
-        (WidgetTester tester) async {
+    testWidgets('rejected screen shows a not-approved state', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.adminTheme,
@@ -277,23 +284,26 @@ void main() {
       expect(find.text('Request access for another clinic'), findsOneWidget);
     });
 
-    testWidgets('unauthorized screen offers real request and sign-out actions',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.adminTheme,
-          home: const AdminUnauthorizedScreen(),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 500));
+    testWidgets(
+      'unauthorized screen offers real request and sign-out actions',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.adminTheme,
+            home: const AdminUnauthorizedScreen(),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Access Not Authorized'), findsOneWidget);
-      expect(find.text('Request clinic access'), findsOneWidget);
-      expect(find.text('Sign out & switch account'), findsOneWidget);
-    });
+        expect(find.text('Access Not Authorized'), findsOneWidget);
+        expect(find.text('Request clinic access'), findsOneWidget);
+        expect(find.text('Sign out & switch account'), findsOneWidget);
+      },
+    );
 
-    testWidgets('reset studio renders scenario toolbar and reset modal',
-        (WidgetTester tester) async {
+    testWidgets('reset studio renders scenario toolbar and reset modal', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.adminTheme,
@@ -372,16 +382,15 @@ void main() {
         AdminAccessRequestStatus.fromValue('self-approved'),
         AdminAccessRequestStatus.pending,
       );
-      expect(AdminAccessRequestStatus.fromValue(null),
-          AdminAccessRequestStatus.pending);
+      expect(
+        AdminAccessRequestStatus.fromValue(null),
+        AdminAccessRequestStatus.pending,
+      );
     });
 
     test('request document ID is deterministic per user and clinic', () {
       final repository = AdminAccessRequestRepository();
-      expect(
-        repository.documentId('uid-1', 'CLN-84920'),
-        'uid-1_CLN-84920',
-      );
+      expect(repository.documentId('uid-1', 'CLN-84920'), 'uid-1_CLN-84920');
       expect(
         repository.documentId('uid-1', 'CLN-84920'),
         repository.documentId('uid-1', 'CLN-84920'),
@@ -397,18 +406,12 @@ void main() {
     test('cancellation is distinct and non-alarming', () {
       final error = FirebaseAuthException(code: 'popup-closed-by-user');
       expect(AuthErrorMapper.isCancellation(error), isTrue);
-      expect(
-        AuthErrorMapper.message(error),
-        contains('cancelled'),
-      );
+      expect(AuthErrorMapper.message(error), contains('cancelled'));
     });
 
     test('network failure tells the user to check connectivity', () {
       final error = FirebaseAuthException(code: 'network-request-failed');
-      expect(
-        AuthErrorMapper.message(error),
-        contains('Network error'),
-      );
+      expect(AuthErrorMapper.message(error), contains('Network error'));
     });
 
     test('unauthorized domain is reported without leaking internals', () {

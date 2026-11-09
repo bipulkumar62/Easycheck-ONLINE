@@ -20,8 +20,14 @@ class ClinicModel {
   final String doctorCredentials;
   final String doctorSpecialty;
   final String doctorPhotoUrl;
+
+  /// Wide cover image shown on the patient home card. Falls back to the doctor
+  /// photo when a clinic has not uploaded a dedicated cover yet.
+  final String clinicPhotoUrl;
+
   final String doctorStatus; // available | delayed | offDuty
-  final String doctorTiming; // manually entered OPD hours, e.g. 9:00 AM – 5:00 PM
+  final String
+  doctorTiming; // manually entered OPD hours, e.g. 9:00 AM – 5:00 PM
   final int todayParchiCount;
   final int yesterdayParchiCount;
 
@@ -43,6 +49,7 @@ class ClinicModel {
     this.doctorCredentials = '',
     this.doctorSpecialty = '',
     this.doctorPhotoUrl = '',
+    this.clinicPhotoUrl = '',
     this.doctorStatus = 'available',
     this.doctorTiming = '',
     this.todayParchiCount = 0,
@@ -51,9 +58,12 @@ class ClinicModel {
     required this.updatedAt,
   });
 
+  /// The best available image for the patient-facing clinic card.
+  String get coverPhotoUrl =>
+      clinicPhotoUrl.isNotEmpty ? clinicPhotoUrl : doctorPhotoUrl;
+
   /// Create from Firestore document snapshot.
-  factory ClinicModel.fromDocument(
-      Map<String, dynamic> data, String clinicId) {
+  factory ClinicModel.fromDocument(Map<String, dynamic> data, String clinicId) {
     return ClinicModel(
       clinicId: clinicId,
       name: data['name'] as String? ?? '',
@@ -69,6 +79,7 @@ class ClinicModel {
       doctorCredentials: data['doctorCredentials'] as String? ?? '',
       doctorSpecialty: data['doctorSpecialty'] as String? ?? '',
       doctorPhotoUrl: data['doctorPhotoUrl'] as String? ?? '',
+      clinicPhotoUrl: data['clinicPhotoUrl'] as String? ?? '',
       doctorStatus: data['doctorStatus'] as String? ?? 'available',
       doctorTiming: data['doctorTiming'] as String? ?? '',
       todayParchiCount: (data['todayParchiCount'] as num?)?.toInt() ?? 0,
@@ -95,6 +106,7 @@ class ClinicModel {
       'doctorCredentials': doctorCredentials,
       'doctorSpecialty': doctorSpecialty,
       'doctorPhotoUrl': doctorPhotoUrl,
+      'clinicPhotoUrl': clinicPhotoUrl,
       'doctorStatus': doctorStatus,
       'doctorTiming': doctorTiming,
       'todayParchiCount': todayParchiCount,
@@ -118,6 +130,7 @@ class ClinicModel {
     String? doctorCredentials,
     String? doctorSpecialty,
     String? doctorPhotoUrl,
+    String? clinicPhotoUrl,
     String? doctorStatus,
     String? doctorTiming,
     int? todayParchiCount,
@@ -139,11 +152,11 @@ class ClinicModel {
       doctorCredentials: doctorCredentials ?? this.doctorCredentials,
       doctorSpecialty: doctorSpecialty ?? this.doctorSpecialty,
       doctorPhotoUrl: doctorPhotoUrl ?? this.doctorPhotoUrl,
+      clinicPhotoUrl: clinicPhotoUrl ?? this.clinicPhotoUrl,
       doctorStatus: doctorStatus ?? this.doctorStatus,
       doctorTiming: doctorTiming ?? this.doctorTiming,
       todayParchiCount: todayParchiCount ?? this.todayParchiCount,
-      yesterdayParchiCount:
-          yesterdayParchiCount ?? this.yesterdayParchiCount,
+      yesterdayParchiCount: yesterdayParchiCount ?? this.yesterdayParchiCount,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -157,9 +170,10 @@ class ClinicModel {
         : switch (doctorStatus) {
             'delayed' => display.ClinicStatus.delayed,
             'offDuty' => display.ClinicStatus.unavailable,
-            _ => isOnline
-                ? display.ClinicStatus.available
-                : display.ClinicStatus.unavailable,
+            _ =>
+              isOnline
+                  ? display.ClinicStatus.available
+                  : display.ClinicStatus.unavailable,
           };
 
     return display.ClinicModel(

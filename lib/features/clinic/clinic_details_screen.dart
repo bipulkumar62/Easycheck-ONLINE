@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 import '../../app/theme/app_spacing.dart';
@@ -34,19 +35,23 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+    final today =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-'
         '${now.day.toString().padLeft(2, '0')}';
     _queueSubscription = _queueRepository
         .sessionStream(widget.clinic.id, today)
-        .listen((session) {
-      if (!mounted) return;
-      setState(() {
-        _liveCount = session?.currentParchaNumber;
-        _lastUpdate = DateTime.now();
-      });
-    }, onError: (_) {
-      // Keep the last known count when the live feed is unavailable.
-    });
+        .listen(
+          (session) {
+            if (!mounted) return;
+            setState(() {
+              _liveCount = session?.currentParchaNumber;
+              _lastUpdate = DateTime.now();
+            });
+          },
+          onError: (_) {
+            // Keep the last known count when the live feed is unavailable.
+          },
+        );
   }
 
   @override
@@ -73,7 +78,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final sidePadding = constraints.maxWidth > _contentMaxWidth
-              ? (constraints.maxWidth - _contentMaxWidth) / 2 + AppSpacing.gutter
+              ? (constraints.maxWidth - _contentMaxWidth) / 2 +
+                    AppSpacing.gutter
               : AppSpacing.gutter;
 
           return Stack(
@@ -94,47 +100,47 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       horizontal: sidePadding,
                       vertical: AppSpacing.spaceSm,
                     ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    if (!clinic.isActive) ...[
-                      _buildSubscriptionInactiveBanner(clinic),
-                      const SizedBox(height: AppSpacing.spaceLg),
-                    ],
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        if (!clinic.isActive) ...[
+                          _buildSubscriptionInactiveBanner(clinic),
+                          const SizedBox(height: AppSpacing.spaceLg),
+                        ],
 
-                    // 1. Doctor & Clinic Header Card
-                    _buildDoctorHeaderCard(clinic, isAvailable),
+                        // 1. Doctor & Clinic Header Card
+                        _buildDoctorHeaderCard(clinic, isAvailable),
 
-                    const SizedBox(height: AppSpacing.spaceLg),
+                        const SizedBox(height: AppSpacing.spaceLg),
 
-                    // 2. Live Parchi Counter Card Section
-                    _buildParchiCounterCard(clinic),
+                        // 2. Live Parchi Counter Card Section
+                        _buildParchiCounterCard(clinic),
 
-                    const SizedBox(height: AppSpacing.spaceLg),
+                        const SizedBox(height: AppSpacing.spaceLg),
 
-                    // 3. Planning Your Visit Guidance Card
-                    _buildPlanningVisitCard(),
+                        // 3. Planning Your Visit Guidance Card
+                        _buildPlanningVisitCard(),
 
-                    const SizedBox(height: AppSpacing.spaceLg),
+                        const SizedBox(height: AppSpacing.spaceLg),
 
-                    // 4. Off-Hours & Doctor Leave Notice Card
-                    _buildOffHoursNoticeCard(),
+                        // 4. Off-Hours & Doctor Leave Notice Card
+                        _buildOffHoursNoticeCard(),
 
-                    SizedBox(
-                      height: MediaQuery.of(context).padding.bottom + 32.0,
+                        SizedBox(
+                          height: MediaQuery.of(context).padding.bottom + 32.0,
+                        ),
+                      ]),
                     ),
-                  ]),
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
 
-          // Fixed Top App Bar (Header)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildTopAppBar(context),
-          ),
+              // Fixed Top App Bar (Header)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: _buildTopAppBar(context),
+              ),
             ],
           );
         },
@@ -269,17 +275,17 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: PatientColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
         boxShadow: const [
           BoxShadow(
             color: Color(0x14073B78),
-            blurRadius: 8.0,
-            offset: Offset(0, 2),
+            blurRadius: 12.0,
+            offset: Offset(0, 3),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
         child: Stack(
           children: [
             // Ambient Decorative Circle (matching code.html line 7)
@@ -287,10 +293,12 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               right: -40,
               bottom: -40,
               child: Container(
-                width: 160.0,
-                height: 160.0,
+                width: 180.0,
+                height: 180.0,
                 decoration: BoxDecoration(
-                  color: PatientColors.surfaceContainerLow.withValues(alpha: 0.60),
+                  color: PatientColors.surfaceContainerLow.withValues(
+                    alpha: 0.60,
+                  ),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -298,223 +306,35 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
             Padding(
               padding: const EdgeInsets.all(AppSpacing.spaceLg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 300;
+                  final portrait = _buildDoctorPortrait(
+                    size: compact ? 108.0 : 132.0,
+                  );
+                  final info = _buildDoctorInfo(clinic, isAvailable);
+
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Doctor Portrait with verified check badge
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16.0),
-                            child: _buildDoctorImage(),
-                          ),
-                          // Verified badge circle
-                          Positioned(
-                            bottom: -6.0,
-                            right: -6.0,
-                            child: Container(
-                              width: 24.0,
-                              height: 24.0,
-                              decoration: BoxDecoration(
-                                color: PatientColors.secondaryContainer,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2.0),
-                                boxShadow: AppSpacing.elevationLevel1,
-                              ),
-                              child: const Icon(
-                                Icons.verified_rounded,
-                                color: Color(0xFF007147),
-                                size: 14.0,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(width: AppSpacing.spaceLg),
-
-                      // Doctor Meta & Availability Column
-                      Expanded(
-                        child: Column(
+                      if (compact) ...[
+                        Center(child: portrait),
+                        const SizedBox(height: 16.0),
+                        info,
+                      ] else
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Verified Tag & Availability Pill
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'VERIFIED CLINIC PROFILE',
-                                      maxLines: 1,
-                                      style:
-                                          PatientTypography.labelSm.copyWith(
-                                        color: PatientColors.secondary,
-                                        letterSpacing: 0.5,
-                                        fontSize: 10.0,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6.0),
-
-                            // Availability Pill
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10.0,
-                                vertical: 4.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isAvailable
-                                    ? PatientColors.secondaryContainer
-                                    : PatientColors.surfaceContainerLow,
-                                borderRadius: AppSpacing.roundedFull,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (isAvailable) ...[
-                                    const LivePulseDot(
-                                      color: PatientColors.secondary,
-                                      size: 6.0,
-                                    ),
-                                    const SizedBox(width: 6.0),
-                                  ],
-                                  Flexible(
-                                    child: Text(
-                                      isAvailable
-                                          ? 'Currently Available'
-                                          : 'Not Available',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: PatientTypography.labelMd.copyWith(
-                                        color: isAvailable
-                                            ? PatientColors
-                                                .onSecondaryContainer
-                                            : PatientColors.outline,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 8.0),
-
-                            // Doctor Name (H2)
-                            Text(
-                              clinic.doctor.name.isNotEmpty
-                                  ? clinic.doctor.fullName
-                                  : clinic.name,
-                              style: PatientTypography.headlineSm.copyWith(
-                                color: PatientColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-
-                            // Specialty Subtitle
-                            Text(
-                              clinic.doctor.specialty.isNotEmpty
-                                  ? clinic.doctor.specialty
-                                  : 'Doctor availability updates live from '
-                                      'the clinic reception',
-                              style: PatientTypography.bodySm.copyWith(
-                                color: PatientColors.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-
-                            if (clinic.doctor.timing.trim().isNotEmpty) ...[
-                              const SizedBox(height: 8.0),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 1.0),
-                                    child: Icon(
-                                      Icons.schedule_rounded,
-                                      size: 15.0,
-                                      color: PatientColors.secondary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5.0),
-                                  Expanded(
-                                    child: Text(
-                                      clinic.doctor.timing,
-                                      style: PatientTypography.bodySm.copyWith(
-                                        color: PatientColors.secondary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                            portrait,
+                            const SizedBox(width: 18.0),
+                            Expanded(child: info),
                           ],
                         ),
-                      ),
+                      const SizedBox(height: 16.0),
+                      _buildClinicLocationSection(clinic),
                     ],
-                  ),
-
-                  const SizedBox(height: 12.0),
-
-                  // Hospital / Clinic Section
-                  Container(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: Color(0xFFEFF4FF),
-                          width: 1.0,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.local_hospital_rounded,
-                          color: PatientColors.primary,
-                          size: 18.0,
-                        ),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                clinic.name,
-                                style: PatientTypography.titleMd.copyWith(
-                                  color: PatientColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 2.0),
-                              Text(
-                                clinic.address.isEmpty
-                                    ? 'Address not listed'
-                                    : clinic.address,
-                                style: PatientTypography.bodySm.copyWith(
-                                  color: PatientColors.onSurfaceVariant,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ],
@@ -523,39 +343,252 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     );
   }
 
-  Widget _buildDoctorImage() {
+  Widget _buildDoctorPortrait({required double size}) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20.0),
+          child: _buildDoctorImage(size: size),
+        ),
+        // Verified badge circle
+        Positioned(
+          bottom: -7.0,
+          right: -7.0,
+          child: Container(
+            width: 28.0,
+            height: 28.0,
+            decoration: BoxDecoration(
+              color: PatientColors.secondaryContainer,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: AppSpacing.elevationLevel1,
+            ),
+            child: const Icon(
+              Icons.verified_rounded,
+              color: Color(0xFF007147),
+              size: 16.0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDoctorInfo(ClinicModel clinic, bool isAvailable) {
+    final doctorName = clinic.doctor.name.isNotEmpty
+        ? clinic.doctor.name
+        : clinic.name;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'DOCTOR PROFILE',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: PatientTypography.labelSm.copyWith(
+            color: PatientColors.secondary,
+            letterSpacing: 1.0,
+            fontSize: 10.0,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 7.0),
+
+        // Doctor Name — the primary heading of this screen.
+        Text(
+          doctorName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: PatientTypography.headlineMd.copyWith(
+            color: PatientColors.primary,
+            fontWeight: FontWeight.w700,
+            fontSize: 24.0,
+            height: 1.12,
+            letterSpacing: -0.4,
+          ),
+        ),
+
+        if (clinic.doctor.credentials.trim().isNotEmpty) ...[
+          const SizedBox(height: 3.0),
+          Text(
+            clinic.doctor.credentials,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: PatientTypography.bodyMd.copyWith(
+              color: PatientColors.secondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+
+        if (clinic.doctor.specialty.trim().isNotEmpty) ...[
+          const SizedBox(height: 4.0),
+          Text(
+            clinic.doctor.specialty,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: PatientTypography.bodySm.copyWith(
+              color: PatientColors.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 10.0),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+          decoration: BoxDecoration(
+            color: isAvailable
+                ? PatientColors.secondaryContainer
+                : PatientColors.surfaceContainerLow,
+            borderRadius: AppSpacing.roundedFull,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isAvailable) ...[
+                const LivePulseDot(color: PatientColors.secondary, size: 6.0),
+                const SizedBox(width: 6.0),
+              ],
+              Flexible(
+                child: Text(
+                  isAvailable ? 'Currently Available' : 'Not Available',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PatientTypography.labelMd.copyWith(
+                    color: isAvailable
+                        ? PatientColors.onSecondaryContainer
+                        : PatientColors.outline,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        if (clinic.doctor.timing.trim().isNotEmpty) ...[
+          const SizedBox(height: 9.0),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1.0),
+                child: Icon(
+                  Icons.schedule_rounded,
+                  size: 16.0,
+                  color: PatientColors.secondary,
+                ),
+              ),
+              const SizedBox(width: 6.0),
+              Expanded(
+                child: Text(
+                  clinic.doctor.timing,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: PatientTypography.bodySm.copyWith(
+                    color: PatientColors.secondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildClinicLocationSection(ClinicModel clinic) {
+    return Container(
+      padding: const EdgeInsets.only(top: 12.0),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFEFF4FF), width: 1.0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.local_hospital_rounded,
+            color: PatientColors.primary,
+            size: 20.0,
+          ),
+          const SizedBox(width: 9.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  clinic.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: PatientTypography.titleMd.copyWith(
+                    color: PatientColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3.0),
+                Text(
+                  clinic.address.trim().isEmpty
+                      ? 'Address not listed'
+                      : clinic.address,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: PatientTypography.bodySm.copyWith(
+                    color: PatientColors.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoctorImage({required double size}) {
     final photo = widget.clinic.doctor.photoAssetPath;
-    if (photo == null || photo.isEmpty) return _doctorPlaceholder();
+    if (photo == null || photo.isEmpty) return _doctorPlaceholder(size: size);
 
     if (photo.startsWith('http')) {
       return Image.network(
         photo,
-        width: 96.0,
-        height: 96.0,
+        width: size,
+        height: size,
         fit: BoxFit.cover,
-        cacheWidth: 288,
-        errorBuilder: (_, _, _) => _doctorPlaceholder(),
+        cacheWidth: (size * 3).round(),
+        errorBuilder: (_, _, _) => _doctorPlaceholder(size: size),
       );
     }
 
     return Image.asset(
       photo,
-      width: 96.0,
-      height: 96.0,
+      width: size,
+      height: size,
       fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => _doctorPlaceholder(),
+      errorBuilder: (_, _, _) => _doctorPlaceholder(size: size),
     );
   }
 
-  Widget _doctorPlaceholder() {
+  Widget _doctorPlaceholder({required double size}) {
     return Container(
-      width: 96.0,
-      height: 96.0,
-      color: PatientColors.surfaceContainer,
-      child: const Icon(
-        Icons.person,
-        size: 48.0,
-        color: PatientColors.outline,
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFD7E3FF), Color(0xFFEEF4FF)],
+        ),
+      ),
+      child: Icon(
+        Icons.person_rounded,
+        size: size * 0.46,
+        color: PatientColors.primary.withValues(alpha: 0.55),
       ),
     );
   }
@@ -663,7 +696,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
           // Prominent Counter Metric Display Area
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+            padding: const EdgeInsets.symmetric(
+              vertical: 16.0,
+              horizontal: 12.0,
+            ),
             decoration: BoxDecoration(
               color: PatientColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(12.0),
@@ -1037,7 +1073,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
           // Visual Sample of Unavailable Badge Row
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 10.0,
+            ),
             decoration: BoxDecoration(
               color: PatientColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(8.0),

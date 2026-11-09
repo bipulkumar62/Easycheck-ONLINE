@@ -43,8 +43,9 @@ void main() {
       expect(url, 'https://cdn.test/doctor.jpg?v=1');
       expect(captured.url, endpoint);
       expect(captured.headers['Authorization'], 'Bearer firebase-id-token');
-      expect(captured.body, contains('CLN-84920'));
-      expect(captured.body, contains('doctor.jpg'));
+      final bodyText = latin1.decode(captured.bodyBytes);
+      expect(bodyText, contains('CLN-84920'));
+      expect(bodyText, contains('doctor.jpg'));
     });
 
     test('rejects an empty photo without calling the network', () async {
@@ -112,6 +113,7 @@ void main() {
         413: ValidationFailure,
         415: ValidationFailure,
         500: ServerFailure,
+        503: ServerFailure,
       };
 
       for (final entry in expected.entries) {
@@ -146,8 +148,26 @@ void main() {
       }
     });
 
-    test('turns a network failure into a connection failure', () async {
+    test('explains an inactive clinic without leaking server internals', () async {
       final service = serviceWith(
+        (request) async =>
+            http.Response('{"error":"clinic_inactive"}', 403),
+      );
+
+      try {
+        await service.uploadDoctorPhoto(
+          clinicId: 'CLN-84920',
+          bytes: jpegBytes,
+          fileName: 'doctor.jpg',
+        );
+        fail('expected an UnauthorizedFailure');
+      } on UnauthorizedFailure catch (failure) {
+        expect(failure.message, contains('Activate this clinic'));
+        expect(failure.message, isNot(contains('clinic_inactive')));
+      }
+    });
+
+    test('turns a network failure into a connection failure', () async {      final service = serviceWith(
         (request) async => throw http.ClientException('socket closed'),
       );
 

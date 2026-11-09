@@ -14,6 +14,14 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    // The only super-admin authority is the `superAdmin` custom claim, which
+    // can be set only by the trusted Admin SDK / operations CLI. A role field
+    // inside a Firestore document is display data and never grants access.
+    function isSuperAdmin() {
+      return isAuthenticated()
+        && request.auth.token.get('superAdmin', false) == true;
+    }
+
     function isValidClinicId(clinicId) {
       return clinicId.matches('^CLN-[0-9]{5}$');
     }
@@ -54,45 +62,56 @@ service cloud.firestore {
 
     // =========================================================================
     // USERS — document ID is the Firebase Auth UID.
-    // Fields: email, displayName, photoUrl, role, createdAt, updatedAt,
-    //         isActive. There is deliberately no `uid` field.
-    // A client may self-create only a patient profile. Clinic admin access is
-    // never granted by writing this document.
+    // Fields: email, displayName, photoUrl, role, clinicId, createdAt,
+    //         updatedAt, isActive. There is deliberately no `uid` field.
+    // A client may self-create only a patient profile. The super-admin
+    // profile is created by the trusted operator or by a claimed super admin.
     // =========================================================================
 
     match /users/{userId} {
-      allow read: if isSignedInAs(userId);
+      allow get: if isSignedInAs(userId) || isSuperAdmin();
 
-      allow create: if isSignedInAs(userId)
+      // The super-admin console lists every profile. Ordinary users read
+      // only their own document with a direct get.
+      allow list: if isSuperAdmin();
+
+      allow create: if isSuperAdmin() || (
+        isSignedInAs(userId)
         && request.resource.data.role == 'patient'
-        && request.resource.data.isActive == true;
+        && request.resource.data.isActive == true
+      );
 
-      allow update: if isSignedInAs(userId)
+      allow update: if isSuperAdmin() || (
+        isSignedInAs(userId)
         && request.resource.data.role == resource.data.role
-        && request.resource.data.isActive == resource.data.isActive;
+        && request.resource.data.isActive == resource.data.isActive
+      );
 
       // Play Store account-deletion requirement: a patient may delete only
       // their own profile. Staff profiles are retained for clinic audit and
       // must be removed through the trusted clinic offboarding process.
-      allow delete: if isSignedInAs(userId)
-        && resource.data.role == 'patient';
+      allow delete: if isSuperAdmin() || (
+        isSignedInAs(userId)
+        && resource.data.role == 'patient'
+      );
     }
 
     // =========================================================================
     // CLINICS - document ID is the clinic ID (CLN-XXXXX).
     // Patient discovery needs read access for every signed-in user. The
     // document must never contain a staff identifier or other private field.
-    // Clients cannot create clinics. Only an active clinic_admin may update
-    // clinic content.
+    // Clients cannot create clinics. A super admin or an active clinic_admin
+    // may update clinic content.
     // =========================================================================
 
     match /clinics/{clinicId} {
       allow read: if isAuthenticated();
 
-      allow create: if false;
+      allow create: if isSuperAdmin() && isValidClinicId(clinicId);
 
-      allow update: if isAuthenticated()
-        && isClinicAdmin(request.auth.uid, clinicId);
+      allow update: if isSuperAdmin() || (
+        isAuthenticated() && isClinicAdmin(request.auth.uid, clinicId)
+      );
 
       allow delete: if false;
     }
@@ -101,31 +120,42 @@ service cloud.firestore {
     // CLINIC_MEMBERS — document ID is {userId}_{clinicId}.
     // Fields: userId, clinicId, role, permissions, isActive, joinedAt,
     //         assignedBy.
-    // Memberships are provisioned only by trusted tooling (Admin SDK / Super
-    // Admin backend), which bypasses these rules. The applicant client can
-    // never create, activate or elevate its own membership, and no client can
-    // grant admin access without Super Admin approval.
+    // Memberships are provisioned only by the super-admin console or trusted
+    // tooling (Admin SDK). The applicant client can never create, activate or
+    // elevate its own membership.
     // =========================================================================
 
     match /clinic_members/{membershipId} {
-      allow read: if isAuthenticated() && (
-        resource.data.get('userId', '') == request.auth.uid
-        || isClinicManager(request.auth.uid, resource.data.get('clinicId', ''))
+      allow get: if isSuperAdmin() || (
+        isAuthenticated() && (
+          resource.data.get('userId', '') == request.auth.uid
+          || isClinicManager(request.auth.uid, resource.data.get('clinicId', ''))
+        )
       );
 
-      allow create, update, delete: if false;
+      allow list: if isSuperAdmin();
+      allow list: if isAuthenticated()
+        && resource.data.get('userId', '') == request.auth.uid;
+      allow list: if isAuthenticated()
+        && isClinicManager(request.auth.uid, resource.data.get('clinicId', ''));
+
+      allow create, update, delete: if isSuperAdmin();
     }
 
     // =========================================================================
     // ADMIN_ACCESS_REQUESTS — document ID is {uid}_{clinicId}.
     // The applicant may create only a pending request for its own UID and
-    // read only its own requests. Approval/rejection is intentionally denied
-    // to clients; only the trusted Super Admin backend (Admin SDK) can change
-    // status or create clinic memberships.
+    // read only its own requests. Approval/rejection is a super-admin action.
     // =========================================================================
 
     match /admin_access_requests/{requestId} {
-      allow read: if isAuthenticated()
+      allow get: if isSuperAdmin() || (
+        isAuthenticated()
+        && resource.data.get('uid', '') == request.auth.uid
+      );
+
+      allow list: if isSuperAdmin();
+      allow list: if isAuthenticated()
         && resource.data.get('uid', '') == request.auth.uid;
 
       allow create: if isAuthenticated()
@@ -158,25 +188,30 @@ service cloud.firestore {
         && request.resource.data.reviewedBy == null
         && request.resource.data.rejectionReason == null;
 
-      allow update, delete: if false;
+      allow update: if isSuperAdmin()
+        && resource.data.get('status', '') == 'pending'
+        && request.resource.data.status in ['approved', 'rejected']
+        && request.resource.data.reviewedBy == request.auth.uid;
+
+      allow delete: if isSuperAdmin();
     }
 
     // =========================================================================
     // QUEUE_SESSIONS — document ID is {clinicId}_{YYYY-MM-DD}.
     // Readable by every signed-in user so patient discovery can show live
-    // parchi counts. Writes require clinic staff membership.
+    // parchi counts. Writes require clinic staff membership or super admin.
     // =========================================================================
 
     match /queue_sessions/{sessionId} {
       allow read: if isAuthenticated();
 
-      allow create: if canManageClinic(request.auth.uid, request.resource.data.clinicId)
+      allow create: if (isSuperAdmin() || canManageClinic(request.auth.uid, request.resource.data.clinicId))
         && sessionId == request.resource.data.clinicId + '_' + request.resource.data.date
         && request.resource.data.currentParchaNumber is int
         && request.resource.data.currentParchaNumber >= 0
         && request.resource.data.status in ['active', 'paused', 'closed'];
 
-      allow update: if canManageClinic(request.auth.uid, resource.data.clinicId)
+      allow update: if (isSuperAdmin() || canManageClinic(request.auth.uid, resource.data.clinicId))
         && request.resource.data.clinicId == resource.data.clinicId
         && request.resource.data.date == resource.data.date
         && request.resource.data.currentParchaNumber is int
@@ -191,14 +226,32 @@ service cloud.firestore {
     // =========================================================================
 
     match /queue_history/{historyId} {
-      allow read: if isAuthenticated()
+      allow get: if isSuperAdmin() || (
+        isAuthenticated()
+        && canViewClinic(request.auth.uid, resource.data.get('clinicId', ''))
+      );
+
+      allow list: if isSuperAdmin();
+      allow list: if isAuthenticated()
         && canViewClinic(request.auth.uid, resource.data.get('clinicId', ''));
 
-      allow create: if isAuthenticated()
+      allow create: if isSuperAdmin() || (
+        isAuthenticated()
         && canManageClinic(request.auth.uid, request.resource.data.clinicId)
         && request.resource.data.performedBy == request.auth.uid
-        && request.resource.data.action in ['increment', 'correction', 'reset'];
+        && request.resource.data.action in ['increment', 'correction', 'reset']
+      );
 
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // SUPER_ADMIN_AUDIT_LOGS — append-only mirror written by the console.
+    // =========================================================================
+
+    match /super_admin_audit_logs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isSuperAdmin();
       allow update, delete: if false;
     }
 

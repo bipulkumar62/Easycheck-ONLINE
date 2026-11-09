@@ -48,6 +48,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _loading = true;
   bool _busy = false;
   bool _isUploadingPhoto = false;
+  bool _isUploadingClinicPhoto = false;
   String? _error;
 
   ClinicModel? _clinic;
@@ -131,23 +132,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _count = 0;
 
       final loadedClinic = clinic;
-      _membersFuture =
-          _membershipRepository.getClinicMembers(loadedClinic.clinicId);
-
-      _sessionSubscription =
-          _queueRepository.sessionStream(loadedClinic.clinicId, _dateKey).listen(
-        (session) {
-          if (!mounted) return;
-          setState(() {
-            _session = session;
-            _count = session?.currentParchaNumber ??
-                loadedClinic.todayParchiCount;
-          });
-        },
-        onError: (_) {
-          // Keep the last known counter value.
-        },
+      _membersFuture = _membershipRepository.getClinicMembers(
+        loadedClinic.clinicId,
       );
+
+      _sessionSubscription = _queueRepository
+          .sessionStream(loadedClinic.clinicId, _dateKey)
+          .listen(
+            (session) {
+              if (!mounted) return;
+              setState(() {
+                _session = session;
+                _count =
+                    session?.currentParchaNumber ??
+                    loadedClinic.todayParchiCount;
+              });
+            },
+            onError: (_) {
+              // Keep the last known counter value.
+            },
+          );
 
       setState(() {
         _clinic = loadedClinic;
@@ -158,24 +162,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       // If the network administrator disables this clinic while the dashboard
       // is open, pause the controls immediately and show the subscription
       // notice instead of letting the clinic keep writing to a disabled queue.
-      _clinicSubscription =
-          _clinicRepository.clinicStream(loadedClinic.clinicId).listen(
-        (clinic) {
-          if (!mounted || clinic == null) return;
-          if (!clinic.isActive) {
-            _clinicSubscription?.cancel();
-            Navigator.of(context).pushReplacementNamed(
-              AppRoutes.adminInactive,
-              arguments: clinic,
-            );
-            return;
-          }
-          setState(() => _clinic = clinic);
-        },
-        onError: (_) {
-          // Keep the last known clinic profile when the live feed drops.
-        },
-      );
+      _clinicSubscription = _clinicRepository
+          .clinicStream(loadedClinic.clinicId)
+          .listen(
+            (clinic) {
+              if (!mounted || clinic == null) return;
+              if (!clinic.isActive) {
+                _clinicSubscription?.cancel();
+                Navigator.of(context).pushReplacementNamed(
+                  AppRoutes.adminInactive,
+                  arguments: clinic,
+                );
+                return;
+              }
+              setState(() => _clinic = clinic);
+            },
+            onError: (_) {
+              // Keep the last known clinic profile when the live feed drops.
+            },
+          );
 
       // Make sure today's session document exists so the counter is live.
       try {
@@ -216,9 +221,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         );
         return;
       case AdminAccessState.none:
-        Navigator.of(context).pushReplacementNamed(
-          AppRoutes.adminAccessRequest,
-        );
+        Navigator.of(context)
+            .pushReplacementNamed(AppRoutes.adminAccessRequest);
         return;
       case AdminAccessState.inactive:
         Navigator.of(context).pushReplacementNamed(
@@ -444,6 +448,140 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  Future<void> _changeClinicPhoto(ClinicModel clinic) async {
+    if (_isUploadingClinicPhoto) return;
+
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      maxHeight: 1200,
+      imageQuality: 84,
+    );
+    if (picked == null || !mounted) return;
+
+    setState(() => _isUploadingClinicPhoto = true);
+    try {
+      final bytes = await picked.readAsBytes();
+      final url = await _photoService.uploadClinicPhoto(
+        clinicId: clinic.clinicId,
+        bytes: bytes,
+        fileName: picked.name,
+      );
+      await _clinicRepository.updateClinic(clinic.clinicId, {
+        'clinicPhotoUrl': url,
+      });
+      if (!mounted) return;
+      setState(() {
+        _clinic = clinic.copyWith(clinicPhotoUrl: url);
+      });
+      _showMessage('Clinic photo updated for patients.');
+    } on AppFailure catch (failure) {
+      if (!mounted) return;
+      _showMessage(failure.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Could not update the clinic photo. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isUploadingClinicPhoto = false);
+    }
+  }
+
+  Widget _buildClinicPhotoCard(ClinicModel clinic) {
+    final photo = clinic.clinicPhotoUrl;
+    final Widget image;
+    if (photo.isEmpty) {
+      image = _clinicPhotoPlaceholder();
+    } else if (photo.startsWith('http')) {
+      image = Image.network(
+        photo,
+        width: double.infinity,
+        height: 108,
+        fit: BoxFit.cover,
+        cacheWidth: 1000,
+        errorBuilder: (_, _, _) => _clinicPhotoPlaceholder(),
+      );
+    } else {
+      image = Image.asset(
+        photo,
+        width: double.infinity,
+        height: 108,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _clinicPhotoPlaceholder(),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.spaceLg),
+      decoration: BoxDecoration(
+        color: AdminColors.surfaceContainerLowest,
+        borderRadius: AppSpacing.roundedLg,
+        boxShadow: AppSpacing.elevationLevel1,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(borderRadius: BorderRadius.circular(14), child: image),
+          const SizedBox(height: AppSpacing.spaceMd),
+          Text(
+            'Clinic cover photo',
+            style: AppTypography.titleMd.copyWith(
+              color: AdminColors.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'This wide image appears on the patient home card above the clinic '
+            'name. Use a clear photo of the clinic entrance, reception or '
+            'consultation room.',
+            style: AppTypography.bodySm.copyWith(
+              color: AdminColors.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.spaceMd),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isUploadingClinicPhoto
+                  ? null
+                  : () => _changeClinicPhoto(clinic),
+              icon: _isUploadingClinicPhoto
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.add_photo_alternate_outlined, size: 18),
+              label: Text(
+                _isUploadingClinicPhoto ? 'Uploading…' : 'Change clinic photo',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _clinicPhotoPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 108,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF073B78), Color(0xFF0A5AA8)],
+        ),
+      ),
+      child: const Icon(
+        Icons.local_hospital_rounded,
+        color: Colors.white,
+        size: 38,
+      ),
+    );
+  }
+
   Widget _buildDoctorPhotoCard(ClinicModel clinic) {
     final photo = clinic.doctorPhotoUrl;
     final Widget image;
@@ -481,10 +619,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: image,
-              ),
+              ClipRRect(borderRadius: BorderRadius.circular(16), child: image),
               const SizedBox(width: AppSpacing.spaceMd),
               Expanded(
                 child: Column(
@@ -514,8 +649,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed:
-                  _isUploadingPhoto ? null : () => _changeDoctorPhoto(clinic),
+              onPressed: _isUploadingPhoto
+                  ? null
+                  : () => _changeDoctorPhoto(clinic),
               icon: _isUploadingPhoto
                   ? const SizedBox(
                       width: 16,
@@ -553,10 +689,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       // UI-only mode.
     }
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   void _showMessage(String message) {
@@ -635,8 +769,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Center(
                 child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: _contentMaxWidth),
+                  constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
                   child: child,
                 ),
               ),
@@ -671,8 +804,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Center(
                 child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: _contentMaxWidth),
+                  constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: children,
@@ -830,8 +962,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 11,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                         color: selected
                             ? AdminColors.primary
                             : AdminColors.onSurfaceVariant,
@@ -871,8 +1004,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final part = hour < 12
         ? 'Good morning'
         : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+        ? 'Good afternoon'
+        : 'Good evening';
     final name = _clinic?.doctorName.trim() ?? '';
     return name.isEmpty ? '$part, Doctor' : '$part, $name';
   }
@@ -1095,8 +1228,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Text(
             clinic.doctorName.isNotEmpty
                 ? (clinic.doctorCredentials.isEmpty
-                    ? clinic.doctorName
-                    : '${clinic.doctorName}, ${clinic.doctorCredentials}')
+                      ? clinic.doctorName
+                      : '${clinic.doctorName}, ${clinic.doctorCredentials}')
                 : 'Doctor not assigned',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1210,20 +1343,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildAvailabilityPill(String status) {
     final (label, background, foreground) = switch (status) {
       'delayed' => (
-          'Delayed',
-          const Color(0xFFFEF3C7),
-          const Color(0xFFB45309),
-        ),
+        'Delayed',
+        const Color(0xFFFEF3C7),
+        const Color(0xFFB45309),
+      ),
       'offDuty' => (
-          'Off-Duty',
-          AdminColors.surfaceContainerHigh,
-          AdminColors.onSurfaceVariant,
-        ),
+        'Off-Duty',
+        AdminColors.surfaceContainerHigh,
+        AdminColors.onSurfaceVariant,
+      ),
       _ => (
-          'Online',
-          AdminColors.secondaryContainer,
-          AdminColors.onSecondaryContainer,
-        ),
+        'Online',
+        AdminColors.secondaryContainer,
+        AdminColors.onSecondaryContainer,
+      ),
     };
 
     return LiveStatusPill(
@@ -1276,10 +1409,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelMd.copyWith(
                     fontSize: 11.5,
-                    color:
-                        selected ? color : AdminColors.onSurfaceVariant,
-                    fontWeight:
-                        selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? color : AdminColors.onSurfaceVariant,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ],
@@ -1482,15 +1613,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               return _buildInfoCard(
                 icon: Icons.history_rounded,
                 title: 'No activity yet',
-                body: 'Counter updates and resets for today will appear here '
+                body:
+                    'Counter updates and resets for today will appear here '
                     'with a timestamp and audit trail.',
               );
             }
             return Column(
-              children: [
-                for (final entry in entries)
-                  _buildHistoryTile(entry),
-              ],
+              children: [for (final entry in entries) _buildHistoryTile(entry)],
             );
           },
         ),
@@ -1565,10 +1694,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   String _actionLabel(String action) => switch (action) {
-        'reset' => 'Reset',
-        'correction' => 'Correction',
-        _ => 'Increment',
-      };
+    'reset' => 'Reset',
+    'correction' => 'Correction',
+    _ => 'Increment',
+  };
 
   String _shortUid(String uid) {
     if (uid.isEmpty) return 'system';
@@ -1607,7 +1736,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               return _buildInfoCard(
                 icon: Icons.group_add_outlined,
                 title: 'No staff assigned',
-                body: 'Members added to ${clinic.name} will appear here with '
+                body:
+                    'Members added to ${clinic.name} will appear here with '
                     'their role and permissions.',
               );
             }
@@ -1693,20 +1823,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   String _roleLabel(String role) => switch (role) {
-        'clinic_admin' => 'Clinic Admin',
-        'front_desk_lead' => 'Front Desk Lead',
-        'triage_coordinator' => 'Triage Coordinator',
-        _ => role.isEmpty ? 'Staff member' : role,
-      };
+    'clinic_admin' => 'Clinic Admin',
+    'front_desk_lead' => 'Front Desk Lead',
+    'triage_coordinator' => 'Triage Coordinator',
+    _ => role.isEmpty ? 'Staff member' : role,
+  };
 
   String _permissionLabel(String permission) => switch (permission) {
-        'update_tally' => 'Counter',
-        'update_status' => 'Status',
-        'reset_tally' => 'Reset',
-        'manage_staff' => 'Staff',
-        'view_queue' => 'Queue',
-        _ => permission,
-      };
+    'update_tally' => 'Counter',
+    'update_status' => 'Status',
+    'reset_tally' => 'Reset',
+    'manage_staff' => 'Staff',
+    'view_queue' => 'Queue',
+    _ => permission,
+  };
 
   // ───────────────────────────────────────────────────────────────────────────
   // Clinic tab
@@ -1720,6 +1850,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       title: 'Clinic Profile',
       subtitle: 'DOCTOR CONSOLE • EASYCHECK',
       children: [
+        _buildClinicPhotoCard(clinic),
+        const SizedBox(height: AppSpacing.spaceMd),
         _buildDoctorPhotoCard(clinic),
         const SizedBox(height: AppSpacing.spaceMd),
         Container(
@@ -1922,10 +2054,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.spaceSm),
-        TextButton(
-          onPressed: _signOut,
-          child: const Text('Sign out'),
-        ),
+        TextButton(onPressed: _signOut, child: const Text('Sign out')),
       ],
     );
   }
@@ -1936,7 +2065,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _buildInfoCard(
           icon: Icons.admin_panel_settings_outlined,
           title: 'Clinic access required',
-          body: 'Your Google account is signed in, but no active clinic '
+          body:
+              'Your Google account is signed in, but no active clinic '
               'membership is available. Submit a clinic access request or ask '
               'your clinic administrator to activate your membership.',
         ),
@@ -1944,9 +2074,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: () => Navigator.of(context).pushReplacementNamed(
-              AppRoutes.adminAccessRequest,
-            ),
+            onPressed: () =>
+                Navigator.of(context)
+                    .pushReplacementNamed(AppRoutes.adminAccessRequest),
             icon: const Icon(Icons.add_business_rounded, size: 18),
             label: const Text('Request clinic access'),
           ),
@@ -1961,10 +2091,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.spaceSm),
-        TextButton(
-          onPressed: _signOut,
-          child: const Text('Sign out'),
-        ),
+        TextButton(onPressed: _signOut, child: const Text('Sign out')),
       ],
     );
   }

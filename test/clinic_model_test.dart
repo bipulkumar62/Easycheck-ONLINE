@@ -46,6 +46,23 @@ void main() {
     expect(clinic.toDisplayModel().doctor.timing, isEmpty);
   });
 
+  test('clinic cover photo falls back to the doctor photo', () {
+    final clinic = ClinicModel.fromDocument({
+      'name': 'Cover Clinic',
+      'doctorPhotoUrl': 'assets/images/doctor.jpg',
+      'createdAt': Timestamp.fromDate(now),
+      'updatedAt': Timestamp.fromDate(now),
+    }, 'CLN-99998');
+
+    expect(clinic.coverPhotoUrl, 'assets/images/doctor.jpg');
+
+    final updated = clinic.copyWith(
+      clinicPhotoUrl: 'https://cdn.test/cover.jpg',
+    );
+    expect(updated.coverPhotoUrl, 'https://cdn.test/cover.jpg');
+    expect(updated.toMap()['clinicPhotoUrl'], 'https://cdn.test/cover.jpg');
+  });
+
   test('display model receives timing and status for the patient UI', () {
     final clinic = ClinicModel(
       clinicId: 'CLN-84920',

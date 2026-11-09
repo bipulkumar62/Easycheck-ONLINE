@@ -7,13 +7,15 @@ import 'package:http/http.dart' as http;
 import '../../core/config/supabase_config.dart';
 import '../../core/errors/app_failure.dart';
 
-/// Uploads the patient-facing doctor photo through the Supabase Edge Function.
+/// Uploads patient-facing clinic and doctor photos through the Supabase Edge
+/// Function.
 ///
 /// The app sends the Firebase ID token, the clinic ID and the image bytes. The
 /// function verifies the token, confirms an active `clinic_admin` membership in
 /// Firestore, validates the real image format, and writes the file with a
 /// service-role key that never leaves the server. Only the resulting public URL
-/// is stored in Firestore (`clinics/{clinicId}.doctorPhotoUrl`).
+/// is stored in Firestore (`clinics/{clinicId}.clinicPhotoUrl` or
+/// `clinics/{clinicId}.doctorPhotoUrl`).
 class ClinicPhotoService {
   ClinicPhotoService({
     http.Client? client,
@@ -36,7 +38,25 @@ class ClinicPhotoService {
     return user.getIdToken();
   }
 
+  /// Uploads the wide cover image shown on the patient home card.
+  Future<String> uploadClinicPhoto({
+    required String clinicId,
+    required Uint8List bytes,
+    required String fileName,
+  }) {
+    return _uploadPhoto(clinicId: clinicId, bytes: bytes, fileName: fileName);
+  }
+
+  /// Uploads the doctor portrait shown on the clinic details screen.
   Future<String> uploadDoctorPhoto({
+    required String clinicId,
+    required Uint8List bytes,
+    required String fileName,
+  }) {
+    return _uploadPhoto(clinicId: clinicId, bytes: bytes, fileName: fileName);
+  }
+
+  Future<String> _uploadPhoto({
     required String clinicId,
     required Uint8List bytes,
     required String fileName,
@@ -89,16 +109,20 @@ class ClinicPhotoService {
           'Your sign-in session has expired. Please sign in again.',
         );
       case 403:
-        throw const UnauthorizedFailure(
-          'Only an active clinic admin can change this photo.',
+        throw UnauthorizedFailure(
+          _readErrorCode(response.body) == 'clinic_inactive'
+              ? 'Activate this clinic before changing its photo.'
+              : 'Only an active clinic admin can change this photo.',
         );
       case 413:
         throw const ValidationFailure(
           'The photo is larger than 5 MB. Choose a smaller image.',
         );
       case 415:
-        throw const ValidationFailure(
-          'Use a JPEG, PNG or WebP image.',
+        throw const ValidationFailure('Use a JPEG, PNG or WebP image.');
+      case 503:
+        throw const ServerFailure(
+          'The access check is temporarily unavailable. Please try again.',
         );
       default:
         throw const ServerFailure(
@@ -117,5 +141,16 @@ class ClinicPhotoService {
       return null;
     }
     return null;
+  }
+
+  String? _readErrorCode(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final code = decoded['error'];
+      return code is String ? code : null;
+    } catch (_) {
+      return null;
+    }
   }
 }

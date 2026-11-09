@@ -8,6 +8,7 @@ import '../../app/routes/app_routes.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_typography.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/widgets/brand_mark.dart';
 import '../../core/widgets/live_dot.dart';
 import '../../core/widgets/status_pill.dart';
@@ -15,6 +16,7 @@ import '../authentication/google_auth_service.dart';
 import '../authentication/user_profile_model.dart';
 import '../authentication/user_profile_repository.dart';
 import '../clinics/clinic_model.dart';
+import '../legal/about_screen.dart';
 import '../legal/legal_screen.dart';
 import '../clinics/clinic_repository.dart';
 import '../clinics/queue_repository.dart';
@@ -94,56 +96,65 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     await _clinicsSubscription?.cancel();
     await _sessionsSubscription?.cancel();
 
-    _clinicsSubscription =
-        _clinicRepository.clinicsStream().listen((clinics) {
-      if (!mounted) return;
-      setState(() {
-        _clinics = clinics;
-        _isLoading = false;
-        _error = null;
-      });
-    }, onError: (Object error) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _error = error.toString();
-      });
-    });
+    _clinicsSubscription = _clinicRepository.clinicsStream().listen(
+      (clinics) {
+        if (!mounted) return;
+        setState(() {
+          _clinics = clinics;
+          _isLoading = false;
+          _error = null;
+        });
+      },
+      onError: (Object error) {
+        // Keep backend details out of the UI. The raw error is only useful in
+        // debug logs and must never expose Firestore internals to patients.
+        debugPrint('Clinic discovery failed: $error');
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _error = 'Check your connection and try again.';
+        });
+      },
+    );
 
-    _sessionsSubscription =
-        _queueRepository.sessionsForDateStream(_todayKey).listen((sessions) {
-      if (!mounted) return;
-      setState(() {
-        _liveCounts = {
-          for (final session in sessions)
-            session.clinicId: session.currentParchaNumber,
-        };
-      });
-    }, onError: (_) {
-      // A failed counter feed must never block clinic discovery.
-    });
+    _sessionsSubscription = _queueRepository
+        .sessionsForDateStream(_todayKey)
+        .listen(
+          (sessions) {
+            if (!mounted) return;
+            setState(() {
+              _liveCounts = {
+                for (final session in sessions)
+                  session.clinicId: session.currentParchaNumber,
+              };
+            });
+          },
+          onError: (_) {
+            // A failed counter feed must never block clinic discovery.
+          },
+        );
   }
 
   List<ClinicModel> get _filtered {
     if (_searchQuery.isEmpty) return _clinics;
     final query = _searchQuery.toLowerCase();
-    return _clinics.where((clinic) {
-      return clinic.name.toLowerCase().contains(query) ||
-          clinic.address.toLowerCase().contains(query) ||
-          clinic.city.toLowerCase().contains(query) ||
-          clinic.doctorName.toLowerCase().contains(query) ||
-          clinic.doctorSpecialty.toLowerCase().contains(query);
-    }).toList(growable: false);
+    return _clinics
+        .where((clinic) {
+          return clinic.name.toLowerCase().contains(query) ||
+              clinic.address.toLowerCase().contains(query) ||
+              clinic.city.toLowerCase().contains(query) ||
+              clinic.doctorName.toLowerCase().contains(query) ||
+              clinic.doctorSpecialty.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
   }
 
   int _parchiCount(ClinicModel clinic) =>
       _liveCounts[clinic.clinicId] ?? clinic.todayParchiCount;
 
   void _openClinic(ClinicModel clinic) {
-    Navigator.of(context).pushNamed(
-      AppRoutes.patientClinicDetails,
-      arguments: clinic,
-    );
+    Navigator.of(context)
+        .pushNamed(AppRoutes.patientClinicDetails, arguments: clinic);
   }
 
   Future<void> _signOut() async {
@@ -155,10 +166,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       // UI-only mode: still return to the login screen.
     }
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   Future<void> _deleteAccount() async {
@@ -228,10 +237,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       }
       await user.delete();
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.initial,
-        (route) => false,
-      );
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
     } on FirebaseAuthException catch (e) {
       if (profileDeleted && profile != null) {
         // Restore the profile if sign-in deletion still fails, so the user is
@@ -247,7 +254,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       _showMessage(
         e.code == 'requires-recent-login'
             ? 'For your security, sign out, sign in again, then delete your '
-                'account.'
+                  'account.'
             : 'Your account could not be deleted. Please try again.',
       );
     } catch (_) {
@@ -280,11 +287,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       backgroundColor: PatientColors.surface,
       body: IndexedStack(
         index: _navIndex,
-        children: [
-          _buildHomeTab(),
-          _buildMyClinicsTab(),
-          _buildSettingsTab(),
-        ],
+        children: [_buildHomeTab(), _buildMyClinicsTab(), _buildSettingsTab()],
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
@@ -306,9 +309,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
-                child: SizedBox(height: topInset + 64.0),
-              ),
+              SliverToBoxAdapter(child: SizedBox(height: topInset + 64.0)),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.gutter,
@@ -349,9 +350,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                     },
                   ),
                 ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: bottomInset + 24.0),
-              ),
+              SliverToBoxAdapter(child: SizedBox(height: bottomInset + 24.0)),
             ],
           ),
         ),
@@ -392,7 +391,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 children: [
                   const BrandMark(size: 36, padding: 4, radius: 10),
                   const SizedBox(width: AppSpacing.spaceSm),
-                  const Flexible(
+                  const Expanded(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
@@ -426,7 +425,6 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       ),
                     ),
                   ),
-                  const Spacer(),
                   IconButton(
                     tooltip: 'Notifications',
                     onPressed: _showNotificationsSheet,
@@ -470,11 +468,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 : null,
           ),
           child: photoUrl == null || photoUrl.isEmpty
-              ? const Icon(
-                  Icons.person_rounded,
-                  color: Colors.white,
-                  size: 20,
-                )
+              ? const Icon(Icons.person_rounded, color: Colors.white, size: 20)
               : null,
         ),
       ),
@@ -482,81 +476,85 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildLocationRow() {
-    return Wrap(
-      spacing: AppSpacing.spaceSm,
-      runSpacing: AppSpacing.spaceSm,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: const BoxDecoration(
-            color: PatientColors.surfaceContainerLow,
-            borderRadius: AppSpacing.roundedFull,
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.location_on_rounded,
-                size: 18,
-                color: PatientColors.primary,
-              ),
-              SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  'Lahore, Punjab',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: PatientColors.primary,
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: AppSpacing.spaceSm,
+        runSpacing: AppSpacing.spaceSm,
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: const BoxDecoration(
+              color: PatientColors.surfaceContainerLow,
+              borderRadius: AppSpacing.roundedFull,
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.location_on_rounded,
+                  size: 18,
+                  color: PatientColors.primary,
+                ),
+                SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    AppConstants.defaultCity,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: PatientColors.primary,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 2),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: PatientColors.outline,
-              ),
-            ],
+                SizedBox(width: 2),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: PatientColors.outline,
+                ),
+              ],
+            ),
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: PatientColors.surfaceContainerLowest,
-            borderRadius: AppSpacing.roundedFull,
-            boxShadow: AppSpacing.elevationLevel1,
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LiveDot(
-                size: 6,
-                color: PatientColors.secondary,
-                semanticsLabel: 'Live queue',
-              ),
-              SizedBox(width: 2),
-              Flexible(
-                child: Text(
-                  'Live Queue',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: PatientColors.secondary,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: PatientColors.surfaceContainerLowest,
+              borderRadius: AppSpacing.roundedFull,
+              boxShadow: AppSpacing.elevationLevel1,
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LiveDot(
+                  size: 6,
+                  color: PatientColors.secondary,
+                  semanticsLabel: 'Live queue',
+                ),
+                SizedBox(width: 2),
+                Flexible(
+                  child: Text(
+                    'Live Queue',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: PatientColors.secondary,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -604,34 +602,41 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     final showLiveSync = MediaQuery.sizeOf(context).width >= 390;
     return Row(
       children: [
-        Flexible(
-          child: Text(
-            'Registered Clinics',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.headlineSm.copyWith(
-              color: PatientColors.primary,
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.spaceSm),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: const BoxDecoration(
-            color: PatientColors.surfaceContainer,
-            borderRadius: AppSpacing.roundedFull,
-          ),
-          child: Text(
-            '${_filtered.length} Active',
-            maxLines: 1,
-            style: AppTypography.labelSm.copyWith(
-              color: PatientColors.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
+        Expanded(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  'Registered Clinics',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.headlineSm.copyWith(
+                    color: PatientColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.spaceSm),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: const BoxDecoration(
+                  color: PatientColors.surfaceContainer,
+                  borderRadius: AppSpacing.roundedFull,
+                ),
+                child: Text(
+                  '${_filtered.length} Active',
+                  maxLines: 1,
+                  style: AppTypography.labelSm.copyWith(
+                    color: PatientColors.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         if (showLiveSync) ...[
-          const Spacer(),
+          const SizedBox(width: AppSpacing.spaceSm),
           Text(
             'Live Sync',
             maxLines: 1,
@@ -663,10 +668,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             size: 44,
           ),
           const SizedBox(height: AppSpacing.spaceMd),
-          Text(
-            'Could not load clinics',
-            style: AppTypography.titleMd,
-          ),
+          Text('Could not load clinics', style: AppTypography.titleMd),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
             _error ?? 'Check your connection and try again.',
@@ -707,9 +709,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
-            hasSearch
-                ? 'Try a different hospital, doctor, or area.'
-                : 'Pull down to refresh. New clinics appear here automatically.',
+            hasSearch ? 'Try a different hospital, doctor, or area.' : 'Pull down to refresh. New clinics appear here automatically.',
             textAlign: TextAlign.center,
             style: AppTypography.bodySm.copyWith(
               color: PatientColors.onSurfaceVariant,
@@ -798,8 +798,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               children: [
                 Center(
                   child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxWidth: _contentMaxWidth),
+                    constraints: const BoxConstraints(
+                      maxWidth: _contentMaxWidth,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -833,8 +834,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySm.copyWith(
-                                        color:
-                                            PatientColors.onSurfaceVariant,
+                                        color: PatientColors.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -857,12 +857,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                         _buildSettingsTile(
                           icon: Icons.info_outline_rounded,
                           title: 'About EasyCheck',
-                          subtitle: 'Version 1.0.0 (1)',
-                          onTap: () => _showLegalModal(
-                            'About EasyCheck',
-                            'EasyCheck Online is a real-time outpatient and '
-                            'parchi tracking system for clinics and patients.',
-                          ),
+                          subtitle: 'Features, safety and version',
+                          onTap: _openAbout,
                         ),
                         _buildSettingsTile(
                           icon: Icons.delete_forever_outlined,
@@ -895,8 +891,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: PatientColors.error,
                               side: BorderSide(
-                                color: PatientColors.error
-                                    .withValues(alpha: 0.4),
+                                color: PatientColors.error.withValues(
+                                  alpha: 0.4,
+                                ),
                               ),
                             ),
                           ),
@@ -964,7 +961,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           subtitle: subtitle == null
               ? null
               : Text(subtitle, style: AppTypography.labelSm),
-          trailing: trailing ??
+          trailing:
+              trailing ??
               const Icon(
                 Icons.chevron_right_rounded,
                 color: PatientColors.outline,
@@ -1014,12 +1012,28 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      items[index].$1,
-                      size: 23,
-                      color: selected
-                          ? PatientColors.secondary
-                          : PatientColors.onSurfaceVariant,
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? PatientColors.secondaryContainer.withValues(
+                                alpha: 0.55,
+                              )
+                            : Colors.transparent,
+                        borderRadius: AppSpacing.roundedFull,
+                      ),
+                      child: Icon(
+                        items[index].$1,
+                        size: 23,
+                        color: selected
+                            ? PatientColors.secondary
+                            : PatientColors.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -1029,8 +1043,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 11,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                         color: selected
                             ? PatientColors.secondary
                             : PatientColors.onSurfaceVariant,
@@ -1095,49 +1110,14 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
-  void _openLegal(LegalDocument document) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => LegalScreen(document: document),
-      ),
-    );
+  void _openAbout() {
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const AboutScreen()));
   }
 
-  void _showLegalModal(String title, String body) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.spaceXl,
-            0,
-            AppSpacing.spaceXl,
-            AppSpacing.spaceXl,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: AppTypography.headlineSm),
-              const SizedBox(height: AppSpacing.spaceMd),
-              Text(
-                body,
-                style: AppTypography.bodyMd.copyWith(height: 1.5),
-              ),
-              const SizedBox(height: AppSpacing.spaceXl),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  void _openLegal(LegalDocument document) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => LegalScreen(document: document)),
     );
   }
 }
@@ -1180,6 +1160,22 @@ class _ClinicCard extends StatelessWidget {
 
   bool get _isOpen => _status == ClinicOperationalStatus.available;
 
+  String get _locationLine {
+    final city = clinic.city.trim();
+    final region = clinic.region.trim();
+    if (city.isNotEmpty && region.isNotEmpty) return '$city, $region';
+    if (city.isNotEmpty) return city;
+    if (region.isNotEmpty) return region;
+    return clinic.address.trim();
+  }
+
+  String get _doctorLine {
+    final name = clinic.doctorName.trim();
+    final credentials = clinic.doctorCredentials.trim();
+    if (name.isEmpty) return '';
+    return credentials.isEmpty ? name : '$name, $credentials';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -1188,123 +1184,102 @@ class _ClinicCard extends StatelessWidget {
         color: PatientColors.surfaceContainerLowest,
         borderRadius: AppSpacing.roundedLg,
         clipBehavior: Clip.antiAlias,
+        elevation: 1,
+        shadowColor: PatientColors.primary.withValues(alpha: 0.10),
         child: InkWell(
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.spaceLg),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final showPhoto = constraints.maxWidth >= 330;
-                return Column(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCover(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                clinic.name,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.headlineSm.copyWith(
-                                  fontSize: 18,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                              if (clinic.doctorName.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  clinic.doctorCredentials.isEmpty
-                                      ? clinic.doctorName
-                                      : '${clinic.doctorName}, '
-                                          '${clinic.doctorCredentials}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.bodyMd.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: PatientColors.onSurface,
-                                  ),
-                                ),
-                              ],
-                              if (clinic.doctorSpecialty.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  clinic.doctorSpecialty,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.labelMd.copyWith(
-                                    color: PatientColors.secondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                              if (clinic.doctorTiming.trim().isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 1),
-                                      child: Icon(
-                                        Icons.schedule_rounded,
-                                        size: 14,
-                                        color: PatientColors.secondary,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        clinic.doctorTiming,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.labelMd.copyWith(
-                                          color: PatientColors.secondary,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                              const SizedBox(height: AppSpacing.spaceSm),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 1),
-                                    child: Icon(
-                                      Icons.near_me_rounded,
-                                      size: 15,
-                                      color: PatientColors.outline,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      clinic.address,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.bodySm.copyWith(
-                                        color: PatientColors.onSurfaceVariant,
-                                        height: 1.35,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (showPhoto) ...[
-                          const SizedBox(width: AppSpacing.spaceMd),
-                          _buildClinicPhoto(),
-                        ],
-                      ],
+                    Text(
+                      clinic.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.headlineSm.copyWith(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        height: 1.2,
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.spaceMd),
+                    if (_doctorLine.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.medical_services_outlined,
+                            size: 15,
+                            color: PatientColors.secondary,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              _doctorLine,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySm.copyWith(
+                                color: PatientColors.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (_locationLine.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 15,
+                            color: PatientColors.outline,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              _locationLine,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySm.copyWith(
+                                color: PatientColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (clinic.doctorTiming.trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.schedule_rounded,
+                            size: 15,
+                            color: PatientColors.secondary,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              clinic.doctorTiming,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.labelMd.copyWith(
+                                color: PatientColors.secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: AppSpacing.spaceSm,
                       runSpacing: AppSpacing.spaceSm,
@@ -1315,65 +1290,68 @@ class _ClinicCard extends StatelessWidget {
                       ],
                     ),
                   ],
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildClinicPhoto() {
-    final photo = clinic.doctorPhotoUrl;
-    Widget image;
-    if (photo.isEmpty) {
-      image = const _PhotoPlaceholder();
-    } else if (photo.startsWith('http')) {
-      image = Image.network(
-        photo,
-        width: 76,
-        height: 76,
-        fit: BoxFit.cover,
-        cacheWidth: 228,
-        errorBuilder: (_, _, _) => const _PhotoPlaceholder(),
-      );
-    } else {
-      image = Image.asset(
-        photo,
-        width: 76,
-        height: 76,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const _PhotoPlaceholder(),
-      );
-    }
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: image,
-        ),
-        Positioned(
-          right: -2,
-          bottom: -2,
-          child: Container(
-            width: 14,
-            height: 14,
+  Widget _buildCover() {
+    return AspectRatio(
+      aspectRatio: 16 / 7,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildCoverImage(clinic.coverPhotoUrl),
+          const DecoratedBox(
             decoration: BoxDecoration(
-              color: _isOpen
-                  ? PatientColors.secondary
-                  : PatientColors.outlineVariant,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: PatientColors.surfaceContainerLowest,
-                width: 2,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x00000000), Color(0x22000000)],
               ),
             ),
           ),
-        ),
-      ],
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: _isOpen
+                    ? PatientColors.secondaryContainer
+                    : PatientColors.outlineVariant,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: PatientColors.surfaceContainerLowest,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoverImage(String photo) {
+    if (photo.isEmpty) return const _ClinicCoverPlaceholder();
+    if (photo.startsWith('http')) {
+      return Image.network(
+        photo,
+        fit: BoxFit.cover,
+        cacheWidth: 900,
+        errorBuilder: (_, _, _) => const _ClinicCoverPlaceholder(),
+      );
+    }
+    return Image.asset(
+      photo,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => const _ClinicCoverPlaceholder(),
     );
   }
 
@@ -1476,25 +1454,49 @@ class _ClinicCard extends StatelessWidget {
   }
 }
 
-class _PhotoPlaceholder extends StatelessWidget {
-  const _PhotoPlaceholder();
+class _ClinicCoverPlaceholder extends StatelessWidget {
+  const _ClinicCoverPlaceholder();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 76,
-      height: 76,
-      decoration: BoxDecoration(
-        color: PatientColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(14),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF073B78), Color(0xFF0A5AA8)],
+        ),
       ),
-      child: const Icon(
-        Icons.medical_services_outlined,
-        color: PatientColors.outline,
-        size: 30,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned(
+            right: -18,
+            bottom: -30,
+            child: Icon(
+              Icons.local_hospital_rounded,
+              size: 140,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+          ),
+          Center(
+            child: Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+              ),
+              child: const Icon(
+                Icons.local_hospital_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
-

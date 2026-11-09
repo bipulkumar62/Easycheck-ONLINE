@@ -5,11 +5,19 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'firebase_options.dart';
 import 'app/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (!kIsWeb) {
+    // Draw behind the status and navigation bars so the light app surface and
+    // the dark status-bar icons stay consistent on every screen.
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
 
   // Initialize Firebase with real configuration options.
   // If Firebase is not available (e.g. in tests), the app still boots in
@@ -46,8 +54,7 @@ void main() async {
     }
 
     try {
-      await FirebaseCrashlytics.instance
-          .setCrashlyticsCollectionEnabled(true);
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
       FlutterError.onError =
           FirebaseCrashlytics.instance.recordFlutterFatalError;
       PlatformDispatcher.instance.onError = (error, stackTrace) {
@@ -63,17 +70,20 @@ void main() async {
     }
   }
 
-  runZonedGuarded<Future<void>>(() async {
-    runApp(const EasyCheckApp());
-  }, (Object error, StackTrace stackTrace) {
-    if (firebaseReady) {
-      FirebaseCrashlytics.instance.recordError(
-        error,
-        stackTrace,
-        fatal: true,
-      );
-    } else {
-      debugPrint('Uncaught error: $error');
-    }
-  });
+  runZonedGuarded<Future<void>>(
+    () async {
+      runApp(const EasyCheckApp());
+    },
+    (Object error, StackTrace stackTrace) {
+      if (firebaseReady) {
+        FirebaseCrashlytics.instance.recordError(
+          error,
+          stackTrace,
+          fatal: true,
+        );
+      } else {
+        debugPrint('Uncaught error: $error');
+      }
+    },
+  );
 }

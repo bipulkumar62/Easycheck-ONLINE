@@ -4,7 +4,7 @@ class AppConstants {
 
   static const String appName = 'EasyCheck Online';
   static const String appVersion = '1.0.0';
-  static const String defaultCity = 'Lahore, Punjab';
+  static const String defaultCity = 'India';
 
   // AdMob Standard Slot Dimensions
   static const double adBannerWidth = 320.0;

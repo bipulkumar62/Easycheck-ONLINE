@@ -39,9 +39,9 @@ Document ID: `CLN-XXXXX`.
 |-------|------|-------|
 | `name`, `address`, `city`, `region`, `phone`, `email` | string | Clinic profile |
 | `description` | string? | Optional |
-| `adminUid` | string | Backend-provisioned primary administrator |
 | `isActive` | bool | Clinic availability |
 | `isOnline` | bool | Live desk state |
+| `clinicPhotoUrl` | string | Wide clinic cover shown on the patient home card |
 | `doctorName`, `doctorCredentials`, `doctorSpecialty`, `doctorPhotoUrl` | string | Doctor display |
 | `doctorStatus` | string | `available`, `delayed`, `offDuty` |
 | `doctorTiming` | string | Manually entered OPD hours |

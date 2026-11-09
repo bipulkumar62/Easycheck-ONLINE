@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/material.dart';
 
@@ -44,18 +45,31 @@ class EasyCheckApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      builder: (context, child) {
+        final surface = Theme.of(context).scaffoldBackgroundColor;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+            systemNavigationBarColor: surface,
+            systemNavigationBarIconBrightness: Brightness.dark,
+            systemNavigationBarDividerColor: Colors.transparent,
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       initialRoute: AppRoutes.initial,
       routes: {
         AppRoutes.initial: (_) => const RoleSelectionScreen(),
         AppRoutes.patientLogin: (_) => const PatientLoginScreen(),
         AppRoutes.authGate: (context) {
           final arguments = ModalRoute.of(context)?.settings.arguments;
-          final role =
-              arguments is AuthGateArgs ? arguments.role : AuthRole.patient;
+          final role = arguments is AuthGateArgs
+              ? arguments.role
+              : AuthRole.patient;
           final screen = AuthGateScreen(role: role);
-          return role == AuthRole.admin
-              ? _AdminThemed(child: screen)
-              : screen;
+          return role == AuthRole.admin ? _AdminThemed(child: screen) : screen;
         },
         AppRoutes.patientHome: (_) => const PatientHomeScreen(),
         AppRoutes.patientClinicDetails: (context) {
@@ -64,9 +78,7 @@ class EasyCheckApp extends StatelessWidget {
             return ClinicDetailsScreen(clinic: arguments);
           }
           if (arguments is firestore_clinic.ClinicModel) {
-            return ClinicDetailsScreen(
-              clinic: arguments.toDisplayModel(),
-            );
+            return ClinicDetailsScreen(clinic: arguments.toDisplayModel());
           }
           return const PatientHomeScreen();
         },
