@@ -1,22 +1,4 @@
- <div align="center">
 
-<img src="assets/images/easycheck_logo_mark_square.png" alt="EasyCheck Online logo" width="112" />
-
-# EasyCheck ONLINE
-
-### Real-time Clinic Availability & Live Parcha Tracking
-
-**A Flutter-based clinic discovery and queue visibility application.**
-
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-Backend-FFCA28?logo=firebase&logoColor=111111)](https://firebase.google.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-Doctor_photo_storage-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://www.android.com/)
-
-</div>
-
----
 
 ## 📑 Contents
 
