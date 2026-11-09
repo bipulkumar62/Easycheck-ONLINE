@@ -37,6 +37,12 @@ class AdminAccessRequestModel {
   final String email;
   final String displayName;
   final String requestedClinicId;
+
+  /// Human-readable clinic name entered by the applicant. Used when the clinic
+  /// is not onboarded yet; existing-clinic requests also carry the name so the
+  /// Super Admin console can show it without an extra lookup.
+  final String requestedClinicName;
+
   final String contactNumber;
   final AdminAccessRequestStatus status;
   final DateTime createdAt;
@@ -51,6 +57,7 @@ class AdminAccessRequestModel {
     required this.email,
     required this.displayName,
     required this.requestedClinicId,
+    this.requestedClinicName = '',
     this.contactNumber = '',
     required this.status,
     required this.createdAt,
@@ -70,6 +77,7 @@ class AdminAccessRequestModel {
       email: data['email'] as String? ?? '',
       displayName: data['displayName'] as String? ?? '',
       requestedClinicId: data['requestedClinicId'] as String? ?? '',
+      requestedClinicName: data['requestedClinicName'] as String? ?? '',
       contactNumber: data['contactNumber'] as String? ?? '',
       status: AdminAccessRequestStatus.fromValue(data['status'] as String?),
       createdAt: _toDate(data['createdAt']) ?? DateTime.now(),
@@ -95,6 +103,7 @@ class AdminAccessRequestModel {
       'email': email,
       'displayName': displayName,
       'requestedClinicId': requestedClinicId,
+      'requestedClinicName': requestedClinicName,
       'contactNumber': contactNumber,
       'status': status.value,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -109,6 +118,7 @@ class AdminAccessRequestModel {
     String? email,
     String? displayName,
     String? requestedClinicId,
+    String? requestedClinicName,
     String? contactNumber,
     AdminAccessRequestStatus? status,
     DateTime? updatedAt,
@@ -122,6 +132,7 @@ class AdminAccessRequestModel {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       requestedClinicId: requestedClinicId ?? this.requestedClinicId,
+      requestedClinicName: requestedClinicName ?? this.requestedClinicName,
       contactNumber: contactNumber ?? this.contactNumber,
       status: status ?? this.status,
       createdAt: createdAt,
@@ -146,8 +157,5 @@ class AdminAccessFlowArgs {
   final AdminAccessRequestModel request;
   final ClinicModel? clinic;
 
-  const AdminAccessFlowArgs({
-    required this.request,
-    this.clinic,
-  });
+  const AdminAccessFlowArgs({required this.request, this.clinic});
 }

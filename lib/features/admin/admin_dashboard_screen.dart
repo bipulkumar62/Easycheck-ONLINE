@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -410,6 +411,46 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  Future<void> _editDoctorProfile(ClinicModel clinic) async {
+    if (_busy) return;
+
+    final draft = await showDialog<_DoctorProfileDraft>(
+      context: context,
+      builder: (_) => _DoctorProfileDialog(clinic: clinic),
+    );
+    if (draft == null) return;
+    await _saveDoctorProfile(clinic, draft);
+  }
+
+  Future<void> _saveDoctorProfile(
+    ClinicModel clinic,
+    _DoctorProfileDraft draft,
+  ) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await _clinicRepository.updateClinic(clinic.clinicId, {
+        'doctorName': draft.name,
+        'doctorCredentials': draft.credentials,
+        'doctorSpecialty': draft.specialty,
+      });
+      if (!mounted) return;
+      setState(() {
+        _clinic = clinic.copyWith(
+          doctorName: draft.name,
+          doctorCredentials: draft.credentials,
+          doctorSpecialty: draft.specialty,
+        );
+      });
+      _showMessage('Doctor profile updated for patients.');
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Could not update the doctor profile. Please try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _changeDoctorPhoto(ClinicModel clinic) async {
     if (_isUploadingPhoto) return;
 
@@ -676,6 +717,95 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Icons.medical_services_outlined,
         color: AdminColors.primary,
         size: 28,
+      ),
+    );
+  }
+
+  Widget _buildDoctorProfileCard(ClinicModel clinic) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.spaceLg),
+      decoration: BoxDecoration(
+        color: AdminColors.surfaceContainerLowest,
+        borderRadius: AppSpacing.roundedLg,
+        boxShadow: AppSpacing.elevationLevel1,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.badge_outlined,
+                color: AdminColors.primary,
+                size: 19,
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  'DOCTOR PROFILE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.labelSm.copyWith(
+                    color: AdminColors.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    fontSize: 10.5,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _busy ? null : () => _editDoctorProfile(clinic),
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text('Edit'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            clinic.doctorName.trim().isEmpty
+                ? 'Add the doctor name, degree and specialty shown to patients.'
+                : clinic.doctorName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.headlineSm.copyWith(
+              color: AdminColors.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (clinic.doctorCredentials.trim().isNotEmpty) ...[
+            const SizedBox(height: 3),
+            Text(
+              clinic.doctorCredentials,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.bodySm.copyWith(
+                color: AdminColors.secondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (clinic.doctorSpecialty.trim().isNotEmpty) ...[
+            const SizedBox(height: 3),
+            Text(
+              clinic.doctorSpecialty,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.bodySm.copyWith(
+                color: AdminColors.onSurfaceVariant,
+                height: 1.35,
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.spaceSm),
+          Text(
+            'Patients see this on the home card and clinic page. Changes appear '
+            'live without reinstalling the app.',
+            style: AppTypography.labelSm.copyWith(
+              color: AdminColors.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1220,6 +1350,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     fontSize: 10.5,
                   ),
                 ),
+              ),
+              IconButton(
+                onPressed: _busy ? null : () => _editDoctorProfile(clinic),
+                tooltip: 'Edit doctor profile',
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.edit_outlined, size: 17),
               ),
               _buildAvailabilityPill(status),
             ],
@@ -1854,6 +1990,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         const SizedBox(height: AppSpacing.spaceMd),
         _buildDoctorPhotoCard(clinic),
         const SizedBox(height: AppSpacing.spaceMd),
+        _buildDoctorProfileCard(clinic),
+        const SizedBox(height: AppSpacing.spaceMd),
         Container(
           padding: const EdgeInsets.all(AppSpacing.spaceLg),
           decoration: BoxDecoration(
@@ -2092,6 +2230,138 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         const SizedBox(height: AppSpacing.spaceSm),
         TextButton(onPressed: _signOut, child: const Text('Sign out')),
+      ],
+    );
+  }
+}
+
+class _DoctorProfileDraft {
+  final String name;
+  final String credentials;
+  final String specialty;
+
+  const _DoctorProfileDraft({
+    required this.name,
+    required this.credentials,
+    required this.specialty,
+  });
+}
+
+class _DoctorProfileDialog extends StatefulWidget {
+  final ClinicModel clinic;
+
+  const _DoctorProfileDialog({required this.clinic});
+
+  @override
+  State<_DoctorProfileDialog> createState() => _DoctorProfileDialogState();
+}
+
+class _DoctorProfileDialogState extends State<_DoctorProfileDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _credentialsController;
+  late final TextEditingController _specialtyController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.clinic.doctorName);
+    _credentialsController = TextEditingController(
+      text: widget.clinic.doctorCredentials,
+    );
+    _specialtyController = TextEditingController(
+      text: widget.clinic.doctorSpecialty,
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _credentialsController.dispose();
+    _specialtyController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop(
+      _DoctorProfileDraft(
+        name: _nameController.text.trim(),
+        credentials: _credentialsController.text.trim(),
+        specialty: _specialtyController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit doctor profile'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [LengthLimitingTextInputFormatter(80)],
+                decoration: const InputDecoration(
+                  labelText: 'Doctor name',
+                  hintText: 'Dr. Rajesh Kumar',
+                  prefixIcon: Icon(Icons.person_outline_rounded),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Enter the doctor name shown to patients.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _credentialsController,
+                textCapitalization: TextCapitalization.characters,
+                inputFormatters: [LengthLimitingTextInputFormatter(120)],
+                decoration: const InputDecoration(
+                  labelText: 'Degree / qualifications',
+                  hintText: 'MBBS, MD (Medicine)',
+                  prefixIcon: Icon(Icons.school_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _specialtyController,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [LengthLimitingTextInputFormatter(120)],
+                decoration: const InputDecoration(
+                  labelText: 'Specialty / designation',
+                  hintText: 'Consultant Cardiologist',
+                  prefixIcon: Icon(Icons.medical_services_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'These details appear on the patient home card and clinic page, '
+                'and update live.',
+                style: AppTypography.labelSm.copyWith(
+                  color: AdminColors.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Save profile')),
       ],
     );
   }

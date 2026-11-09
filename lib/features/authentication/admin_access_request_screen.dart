@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -12,12 +14,15 @@ import 'admin_access_request_repository.dart';
 import 'admin_auth_widgets.dart';
 import 'auth_error_mapper.dart';
 
+enum _ClinicRequestMode { existing, newClinic }
+
 /// Clinic selection and admin access request form.
 ///
 /// The form only collects the applicant's name, the Google account email,
 /// the clinic and an optional contact number. The applicant cannot choose a
 /// role or permissions, and the request is always written for the current
-/// Firebase UID.
+/// Firebase UID. If the clinic is not listed yet, the applicant can enter its
+/// name so the Super Admin can onboard it manually.
 class AdminAccessRequestScreen extends StatefulWidget {
   const AdminAccessRequestScreen({super.key});
 
@@ -35,13 +40,16 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _clinicNameController = TextEditingController();
 
   bool _loadingClinics = true;
   bool _submitting = false;
   String? _clinicsError;
   String? _submitError;
   List<ClinicModel> _clinics = const [];
+  Set<String> _knownClinicIds = const {};
   String? _selectedClinicId;
+  _ClinicRequestMode _mode = _ClinicRequestMode.existing;
 
   User? get _user {
     try {
@@ -81,7 +89,21 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
     _nameController.dispose();
     _contactController.dispose();
     _emailController.dispose();
+    _clinicNameController.dispose();
     super.dispose();
+  }
+
+  /// Generates a clinic ID in the same CLN-xxxxx format the Super Admin console
+  /// uses. The ID is only a placeholder until the clinic is onboarded; the
+  /// applicant cannot create the clinic record itself.
+  String _generateClinicId() {
+    final random = Random.secure();
+    for (var attempt = 0; attempt < 24; attempt += 1) {
+      final candidate = 'CLN-${10000 + random.nextInt(90000)}';
+      if (!_knownClinicIds.contains(candidate)) return candidate;
+    }
+    final fallback = 10000 + DateTime.now().microsecondsSinceEpoch % 90000;
+    return 'CLN-$fallback';
   }
 
   Future<void> _loadClinics() async {
@@ -104,6 +126,7 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
       if (!mounted) return;
       setState(() {
         _clinics = active;
+        _knownClinicIds = clinics.map((clinic) => clinic.clinicId).toSet();
         _loadingClinics = false;
         if (_selectedClinicId != null &&
             !active.any((clinic) => clinic.clinicId == _selectedClinicId)) {
@@ -132,9 +155,32 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
       return;
     }
 
-    final clinic = _clinics.firstWhere(
-      (item) => item.clinicId == _selectedClinicId,
-    );
+    final isNewClinic = _mode == _ClinicRequestMode.newClinic;
+    ClinicModel? clinic;
+    late final String clinicId;
+    late final String clinicName;
+
+    if (isNewClinic) {
+      clinicName = _clinicNameController.text.trim();
+      clinicId = _generateClinicId();
+    } else {
+      ClinicModel? selected;
+      for (final item in _clinics) {
+        if (item.clinicId == _selectedClinicId) {
+          selected = item;
+          break;
+        }
+      }
+      if (selected == null) {
+        setState(() {
+          _submitError = 'Select the clinic you work for.';
+        });
+        return;
+      }
+      clinic = selected;
+      clinicId = selected.clinicId;
+      clinicName = selected.name;
+    }
 
     setState(() {
       _submitting = true;
@@ -146,8 +192,14 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
         uid: user.uid,
         email: _accountEmail(user),
         displayName: _nameController.text.trim(),
-        clinicId: clinic.clinicId,
+        clinicId: clinicId,
+        clinicName: clinicName,
         contactNumber: _contactController.text.trim(),
+      );
+      if (!mounted) return;
+      await _showSubmittedDialog(
+        clinicName: clinicName,
+        applicantName: _nameController.text.trim(),
       );
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(
@@ -163,6 +215,37 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
     }
   }
 
+  Future<void> _showSubmittedDialog({
+    required String clinicName,
+    required String applicantName,
+  }) async {
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: 'Application submitted',
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      transitionDuration: const Duration(milliseconds: 340),
+      pageBuilder: (dialogContext, _, _) => _AccessSubmittedDialog(
+        clinicName: clinicName,
+        applicantName: applicantName,
+        onClose: () => Navigator.of(dialogContext).pop(),
+      ),
+      transitionBuilder: (_, animation, _, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.88, end: 1).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _signOut() async {
     try {
       if (Firebase.apps.isNotEmpty) {
@@ -172,10 +255,8 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
       // Still return to the role selection screen.
     }
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   @override
@@ -195,7 +276,8 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
           icon: Icons.lock_outline_rounded,
           eyebrow: 'SIGN-IN REQUIRED',
           title: 'Sign in to request access',
-          body: 'Use your Google account so the request can be linked to your '
+          body:
+              'Use your Google account so the request can be linked to your '
               'Firebase identity.',
           iconBackground: AdminColors.surfaceContainerHigh,
           iconColor: AdminColors.secondary,
@@ -204,18 +286,13 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-              AppRoutes.initial,
-              (route) => false,
-            ),
+            onPressed: () => Navigator.of(context)
+                .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false),
             style: FilledButton.styleFrom(
               backgroundColor: AdminColors.primary,
               foregroundColor: AdminColors.onPrimary,
               minimumSize: const Size.fromHeight(48),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -238,8 +315,10 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
           icon: Icons.verified_user_outlined,
           eyebrow: 'ACCESS VERIFICATION',
           title: 'Request clinic access',
-          body: 'Choose your clinic and submit your details. A Super Admin '
-              'reviews every request before the clinic dashboard is enabled.',
+          body:
+              'Choose your clinic or add a new one, then submit your details. '
+              'A Super Admin reviews every application before the clinic '
+              'dashboard is enabled.',
           iconBackground: AdminColors.surfaceContainerLow,
           iconColor: AdminColors.primary,
         ),
@@ -308,56 +387,12 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Google account email',
                     prefixIcon: Icon(Icons.mail_outline_rounded),
-                    helperText: 'Linked automatically from your Google sign-in.',
+                    helperText:
+                        'Linked automatically from your Google sign-in.',
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (_loadingClinics)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      ),
-                    ),
-                  )
-                else if (_clinicsError != null)
-                  _buildClinicLoadError()
-                else if (_clinics.isEmpty)
-                  _buildNoClinics()
-                else
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedClinicId,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Clinic',
-                      prefixIcon: Icon(Icons.local_hospital_outlined),
-                    ),
-                    hint: const Text('Select your clinic'),
-                    items: _clinics
-                        .map(
-                          (clinic) => DropdownMenuItem<String>(
-                            value: clinic.clinicId,
-                            child: Text(
-                              '${clinic.name} (${clinic.clinicId})',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: _submitting
-                        ? null
-                        : (value) => setState(() => _selectedClinicId = value),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Select the clinic you work for.';
-                      }
-                      return null;
-                    },
-                  ),
+                _buildClinicPicker(),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _contactController,
@@ -366,7 +401,8 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Contact number (optional)',
                     prefixIcon: Icon(Icons.call_outlined),
-                    helperText: 'Only used if the review team needs to verify '
+                    helperText:
+                        'Only used if the review team needs to verify '
                         'your request.',
                   ),
                   validator: (value) {
@@ -387,9 +423,13 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed:
-                        (_submitting || _loadingClinics || _clinics.isEmpty)
-                            ? null
-                            : _submit,
+                        _submitting ||
+                            (_mode == _ClinicRequestMode.existing &&
+                                (_loadingClinics ||
+                                    _clinicsError != null ||
+                                    _clinics.isEmpty))
+                        ? null
+                        : _submit,
                     icon: _submitting
                         ? const SizedBox(
                             width: 18,
@@ -442,6 +482,116 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
     );
   }
 
+  Widget _buildClinicPicker() {
+    final isNew = _mode == _ClinicRequestMode.newClinic;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Clinic',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AdminColors.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('Existing clinic'),
+              selected: !isNew,
+              onSelected: _submitting
+                  ? null
+                  : (_) => setState(() => _mode = _ClinicRequestMode.existing),
+            ),
+            ChoiceChip(
+              label: const Text('Add a new clinic'),
+              selected: isNew,
+              onSelected: _submitting
+                  ? null
+                  : (_) => setState(() => _mode = _ClinicRequestMode.newClinic),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (isNew)
+          TextFormField(
+            controller: _clinicNameController,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            maxLength: 120,
+            decoration: const InputDecoration(
+              labelText: 'Clinic name',
+              hintText: 'e.g. Sunrise Family Clinic',
+              prefixIcon: Icon(Icons.add_business_rounded),
+              helperText:
+                  'Not listed yet? Enter the clinic name. Our team will '
+                  'onboard it manually before enabling access.',
+              helperMaxLines: 3,
+            ),
+            validator: (value) {
+              final name = value?.trim() ?? '';
+              if (name.isEmpty) return 'Enter your clinic name.';
+              if (name.length < 2) return 'Enter at least 2 characters.';
+              return null;
+            },
+          )
+        else ...[
+          if (_loadingClinics)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+              ),
+            )
+          else if (_clinicsError != null)
+            _buildClinicLoadError()
+          else if (_clinics.isEmpty)
+            _buildNoClinics()
+          else
+            DropdownButtonFormField<String>(
+              initialValue: _selectedClinicId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Select clinic',
+                prefixIcon: Icon(Icons.local_hospital_outlined),
+              ),
+              hint: const Text('Select your clinic'),
+              items: _clinics
+                  .map(
+                    (clinic) => DropdownMenuItem<String>(
+                      value: clinic.clinicId,
+                      child: Text(
+                        '${clinic.name} (${clinic.clinicId})',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: _submitting
+                  ? null
+                  : (value) => setState(() => _selectedClinicId = value),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Select the clinic you work for.';
+                }
+                return null;
+              },
+            ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildClinicLoadError() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -455,6 +605,13 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
           icon: const Icon(Icons.refresh_rounded, size: 18),
           label: const Text('Retry clinic list'),
         ),
+        TextButton.icon(
+          onPressed: _submitting
+              ? null
+              : () => setState(() => _mode = _ClinicRequestMode.newClinic),
+          icon: const Icon(Icons.add_business_rounded, size: 18),
+          label: const Text('Add your clinic instead'),
+        ),
       ],
     );
   }
@@ -466,25 +623,198 @@ class _AdminAccessRequestScreenState extends State<AdminAccessRequestScreen> {
         color: AdminColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded,
-              color: AdminColors.secondary, size: 20),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'No active clinics are available right now. Ask your clinic’s '
-              'EasyCheck administrator to activate the clinic, then try again.',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: AdminColors.onSurfaceVariant,
-                height: 1.4,
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: AdminColors.secondary,
+                size: 20,
               ),
-            ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'No active clinics are listed right now. You can add your '
+                  'clinic name and our team will onboard it manually.',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: AdminColors.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextButton.icon(
+            onPressed: _submitting
+                ? null
+                : () => setState(() => _mode = _ClinicRequestMode.newClinic),
+            icon: const Icon(Icons.add_business_rounded, size: 18),
+            label: const Text('Add your clinic instead'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AccessSubmittedDialog extends StatelessWidget {
+  final String clinicName;
+  final String applicantName;
+  final VoidCallback onClose;
+
+  const _AccessSubmittedDialog({
+    required this.clinicName,
+    required this.applicantName,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final greeting = applicantName.isEmpty ? '' : ', $applicantName';
+    return Dialog(
+      backgroundColor: AdminColors.surfaceContainerLowest,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 720),
+              curve: Curves.easeOutBack,
+              builder: (_, value, child) =>
+                  Transform.scale(scale: value, child: child),
+              child: Container(
+                width: 86,
+                height: 86,
+                decoration: const BoxDecoration(
+                  color: AdminColors.secondaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: AdminColors.onSecondaryContainer,
+                  size: 48,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 520),
+              curve: Curves.easeOutCubic,
+              builder: (_, value, child) => Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 14 * (1 - value)),
+                  child: child,
+                ),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'Application submitted',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 21,
+                      fontWeight: FontWeight.w700,
+                      color: AdminColors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Thank you$greeting. Your clinic access application for '
+                    '$clinicName has been received successfully.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13.5,
+                      color: AdminColors.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Our team will review your application and contact you '
+                    'within 8–12 hours. Access is enabled only after approval.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12.5,
+                      color: AdminColors.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AdminColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 15,
+                          color: AdminColors.secondary,
+                        ),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Review window · 8–12 hours',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AdminColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: onClose,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AdminColors.primary,
+                        foregroundColor: AdminColors.onPrimary,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Got it',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

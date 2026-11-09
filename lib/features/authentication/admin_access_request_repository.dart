@@ -60,7 +60,9 @@ class AdminAccessRequestRepository {
       if (col == null) return const [];
       final snapshot = await col.where('uid', isEqualTo: uid).get();
       final requests = snapshot.docs
-          .map((doc) => AdminAccessRequestModel.fromDocument(doc.data(), doc.id))
+          .map(
+            (doc) => AdminAccessRequestModel.fromDocument(doc.data(), doc.id),
+          )
           .toList();
       requests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return requests;
@@ -87,6 +89,7 @@ class AdminAccessRequestRepository {
     required String email,
     required String displayName,
     required String clinicId,
+    String clinicName = '',
     String contactNumber = '',
   }) async {
     final fs = _fs;
@@ -135,6 +138,7 @@ class AdminAccessRequestRepository {
         'email': normalizedEmail,
         'displayName': displayName.trim(),
         'requestedClinicId': normalizedClinicId,
+        'requestedClinicName': clinicName.trim(),
         'contactNumber': contactNumber.trim(),
         'status': AdminAccessRequestStatus.pending.value,
         'createdAt': FieldValue.serverTimestamp(),
@@ -150,6 +154,7 @@ class AdminAccessRequestRepository {
         email: normalizedEmail,
         displayName: displayName.trim(),
         requestedClinicId: normalizedClinicId,
+        requestedClinicName: clinicName.trim(),
         contactNumber: contactNumber.trim(),
         status: AdminAccessRequestStatus.pending,
         createdAt: now,

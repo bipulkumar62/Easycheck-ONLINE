@@ -8,6 +8,8 @@ import '../../app/theme/app_spacing.dart';
 import '../../core/widgets/brand_mark.dart';
 import '../../shared/models/clinic_model.dart';
 import '../../shared/widgets/shared_widgets.dart';
+import '../clinics/clinic_model.dart' as firestore_clinic;
+import '../clinics/clinic_repository.dart';
 import '../clinics/queue_repository.dart';
 import '../clinics/queue_session_model.dart';
 
@@ -27,9 +29,16 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   static const double _contentMaxWidth = 720.0;
 
   final QueueRepository _queueRepository = QueueRepository();
+  final ClinicRepository _clinicRepository = ClinicRepository();
   StreamSubscription<QueueSessionModel?>? _queueSubscription;
+  StreamSubscription<firestore_clinic.ClinicModel?>? _clinicSubscription;
   int? _liveCount;
   DateTime? _lastUpdate;
+  ClinicModel? _liveClinic;
+
+  /// Live clinic profile. Falls back to the model passed in by the previous
+  /// screen until the Firestore snapshot arrives.
+  ClinicModel get _clinic => _liveClinic ?? widget.clinic;
 
   @override
   void initState() {
@@ -52,15 +61,32 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
             // Keep the last known count when the live feed is unavailable.
           },
         );
+
+    // Keep the doctor name, degree, specialty, timing, photo and availability
+    // in sync while the patient is on this screen.
+    _clinicSubscription = _clinicRepository
+        .clinicStream(widget.clinic.id)
+        .listen(
+          (clinic) {
+            if (!mounted || clinic == null) return;
+            setState(() {
+              _liveClinic = clinic.toDisplayModel(liveParchiCount: _liveCount);
+            });
+          },
+          onError: (_) {
+            // Keep the profile from the previous screen if the feed drops.
+          },
+        );
   }
 
   @override
   void dispose() {
     _queueSubscription?.cancel();
+    _clinicSubscription?.cancel();
     super.dispose();
   }
 
-  int get _displayCount => _liveCount ?? widget.clinic.todayParchiCount;
+  int get _displayCount => _liveCount ?? _clinic.todayParchiCount;
 
   String _formatTime(DateTime time) {
     final hour = time.hour.toString().padLeft(2, '0');
@@ -70,7 +96,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final clinic = widget.clinic;
+    final clinic = _clinic;
     final isAvailable = clinic.status == ClinicStatus.available;
 
     return Scaffold(
@@ -551,7 +577,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   }
 
   Widget _buildDoctorImage({required double size}) {
-    final photo = widget.clinic.doctor.photoAssetPath;
+    final photo = _clinic.doctor.photoAssetPath;
     if (photo == null || photo.isEmpty) return _doctorPlaceholder(size: size);
 
     if (photo.startsWith('http')) {

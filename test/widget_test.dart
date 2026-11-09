@@ -327,6 +327,7 @@ void main() {
         email: 'staff@example.com',
         displayName: 'Dr. Ayesha Khan',
         requestedClinicId: 'CLN-84920',
+        requestedClinicName: 'Lakeview Multispeciality Clinic',
         contactNumber: '+92 300 1234567',
         status: AdminAccessRequestStatus.pending,
         createdAt: now,
@@ -342,6 +343,7 @@ void main() {
       expect(restored.email, request.email);
       expect(restored.displayName, request.displayName);
       expect(restored.requestedClinicId, request.requestedClinicId);
+      expect(restored.requestedClinicName, request.requestedClinicName);
       expect(restored.contactNumber, request.contactNumber);
       expect(restored.status, AdminAccessRequestStatus.pending);
       expect(restored.reviewedAt, isNull);

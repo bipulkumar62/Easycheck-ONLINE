@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:easycheck_online/app/theme/app_colors.dart';
 import 'package:easycheck_online/app/theme/app_typography.dart';
@@ -137,9 +138,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: const RoundedRectangleBorder(
-          borderRadius: AppSpacing.roundedLg,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: AppSpacing.roundedLg),
       ),
       dividerTheme: DividerThemeData(
         color: colors.outlineVariant.withValues(alpha: 0.5),
@@ -242,9 +241,7 @@ class AppTheme {
           color: colors.onInverseSurface,
         ),
         behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(
-          borderRadius: AppSpacing.roundedMd,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: AppSpacing.roundedMd),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colors.surfaceContainerLowest,
@@ -257,8 +254,18 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: colors.primary,
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: colors.primary),
+      // Smooth, platform-native page changes. Android uses the predictive-back
+      // shared-element transition when the OS supports it and the Material 3
+      // fade-through transition otherwise.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+        },
       ),
       splashFactory: InkSparkle.splashFactory,
     );

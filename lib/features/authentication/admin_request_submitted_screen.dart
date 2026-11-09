@@ -24,10 +24,8 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
       // Still return to the role selection screen.
     }
     if (!context.mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   @override
@@ -42,7 +40,8 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
           icon: Icons.info_outline_rounded,
           eyebrow: 'REQUEST STATUS',
           title: 'Request details unavailable',
-          body: 'Open the access request form again to view or resubmit your '
+          body:
+              'Open the access request form again to view or resubmit your '
               'clinic request.',
           iconBackground: AdminColors.surfaceContainerHigh,
           iconColor: AdminColors.secondary,
@@ -55,10 +54,7 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
               backgroundColor: AdminColors.primary,
               foregroundColor: AdminColors.onPrimary,
               minimumSize: const Size.fromHeight(48),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -73,7 +69,11 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
     }
 
     final request = flow.request;
-    final clinicName = flow.clinic?.name ?? request.requestedClinicId;
+    final clinicName =
+        flow.clinic?.name ??
+        (request.requestedClinicName.trim().isNotEmpty
+            ? request.requestedClinicName
+            : request.requestedClinicId);
     final submitted = DateFormat.yMMMd().add_jm().format(request.createdAt);
 
     return AdminAuthShell(
@@ -87,9 +87,10 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
             icon: Icons.mark_email_read_rounded,
             eyebrow: 'PENDING REVIEW',
             title: 'Request submitted',
-            body: 'Your request for $clinicName is now waiting for Super Admin '
-                'review. You will not have clinic dashboard access until it is '
-                'approved.',
+            body:
+                'Your application for $clinicName has been submitted. Our '
+                'team will review it and contact you within 8–12 hours. You '
+                'will not have clinic dashboard access until it is approved.',
             iconBackground: AdminColors.secondaryContainer,
             iconColor: AdminColors.onSecondaryContainer,
             eyebrowColor: AdminColors.onSecondaryContainer,
@@ -117,8 +118,8 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
                 ),
                 AdminDetailRow(
                   icon: Icons.confirmation_number_outlined,
-                  label: 'Request ID',
-                  value: request.id,
+                  label: 'Clinic ID',
+                  value: request.requestedClinicId,
                 ),
                 AdminDetailRow(
                   icon: Icons.schedule_rounded,
@@ -138,14 +139,17 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.timer_outlined,
-                    color: AdminColors.secondary, size: 20),
+                Icon(
+                  Icons.timer_outlined,
+                  color: AdminColors.secondary,
+                  size: 20,
+                ),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'The review target is within 24 hours. This is a target, '
+                    'The review target is within 8–12 hours. This is a target, '
                     'not automatic approval. Access is enabled only after a '
-                    'Super Admin approves the request.',
+                    'Super Admin approves the application.',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12.5,
@@ -177,10 +181,7 @@ class AdminRequestSubmittedScreen extends StatelessWidget {
               backgroundColor: AdminColors.primary,
               foregroundColor: AdminColors.onPrimary,
               minimumSize: const Size.fromHeight(50),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

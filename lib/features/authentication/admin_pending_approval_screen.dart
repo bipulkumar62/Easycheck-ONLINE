@@ -26,7 +26,8 @@ class AdminPendingApprovalScreen extends StatefulWidget {
       _AdminPendingApprovalScreenState();
 }
 
-class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen> {
+class _AdminPendingApprovalScreenState
+    extends State<AdminPendingApprovalScreen> {
   final AdminAccessService _adminAccessService = AdminAccessService();
 
   bool _checking = false;
@@ -61,10 +62,9 @@ class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen>
 
       switch (resolution.state) {
         case AdminAccessState.approved:
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.adminDashboard,
-            (route) => false,
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(AppRoutes.adminDashboard, (route) => false);
           return;
         case AdminAccessState.rejected:
           Navigator.of(context).pushReplacementNamed(
@@ -76,9 +76,8 @@ class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen>
           );
           return;
         case AdminAccessState.none:
-          Navigator.of(context).pushReplacementNamed(
-            AppRoutes.adminAccessRequest,
-          );
+          Navigator.of(context)
+              .pushReplacementNamed(AppRoutes.adminAccessRequest);
           return;
         case AdminAccessState.inactive:
           Navigator.of(context).pushReplacementNamed(
@@ -123,17 +122,21 @@ class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen>
       // Still return to the role selection screen.
     }
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
     final flow = widget.args;
     final request = flow?.request;
-    final clinicName = flow?.clinic?.name ?? request?.requestedClinicId;
+    final clinicName =
+        flow?.clinic?.name ??
+        (request == null
+            ? null
+            : (request.requestedClinicName.trim().isNotEmpty
+                  ? request.requestedClinicName
+                  : request.requestedClinicId));
 
     return AdminAuthShell(
       title: 'Approval Pending',
@@ -147,10 +150,10 @@ class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen>
             title: 'Approval pending',
             body: request == null
                 ? 'Your clinic access request is waiting for Super Admin '
-                    'review. Check the status again shortly.'
+                      'review. Check the status again shortly.'
                 : 'Your request for $clinicName is waiting for Super Admin '
-                    'review. The clinic dashboard stays locked until the '
-                    'request is approved.',
+                      'review. The clinic dashboard stays locked until the '
+                      'request is approved.',
             iconBackground: AdminColors.surfaceContainerHigh,
             iconColor: AdminColors.secondary,
             eyebrowColor: AdminColors.secondary,
@@ -179,15 +182,15 @@ class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen>
                   ),
                   AdminDetailRow(
                     icon: Icons.confirmation_number_outlined,
-                    label: 'Request ID',
-                    value: request.id,
+                    label: 'Clinic ID',
+                    value: request.requestedClinicId,
                   ),
                   AdminDetailRow(
                     icon: Icons.schedule_rounded,
                     label: 'Submitted',
-                    value: DateFormat.yMMMd()
-                        .add_jm()
-                        .format(request.createdAt),
+                    value: DateFormat.yMMMd().add_jm().format(
+                      request.createdAt,
+                    ),
                   ),
                 ],
               ),
@@ -203,12 +206,15 @@ class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen>
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.timer_outlined,
-                    color: AdminColors.secondary, size: 20),
+                Icon(
+                  Icons.timer_outlined,
+                  color: AdminColors.secondary,
+                  size: 20,
+                ),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Expected review is within 24 hours. This is a review '
+                    'Expected review is within 8–12 hours. This is a review '
                     'target, not automatic approval. You can check again at '
                     'any time.',
                     style: TextStyle(
@@ -252,20 +258,14 @@ class _AdminPendingApprovalScreenState extends State<AdminPendingApprovalScreen>
               backgroundColor: AdminColors.primary,
               foregroundColor: AdminColors.onPrimary,
               minimumSize: const Size.fromHeight(50),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
           const SizedBox(height: 8),
-          TextButton(
-            onPressed: _signOut,
-            child: const Text('Sign out'),
-          ),
+          TextButton(onPressed: _signOut, child: const Text('Sign out')),
         ],
       ),
     );

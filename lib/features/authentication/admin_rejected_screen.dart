@@ -27,17 +27,21 @@ class AdminRejectedScreen extends StatelessWidget {
       // Still return to the role selection screen.
     }
     if (!context.mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
     final flow = args;
     final request = flow?.request;
-    final clinicName = flow?.clinic?.name ?? request?.requestedClinicId;
+    final clinicName =
+        flow?.clinic?.name ??
+        (request == null
+            ? null
+            : (request.requestedClinicName.trim().isNotEmpty
+                  ? request.requestedClinicName
+                  : request.requestedClinicId));
     final reason = request?.rejectionReason?.trim();
 
     return AdminAuthShell(
@@ -52,9 +56,9 @@ class AdminRejectedScreen extends StatelessWidget {
             title: 'Application not approved',
             body: request == null
                 ? 'Your clinic access request was not approved. Admin access '
-                    'has not been granted.'
+                      'has not been granted.'
                 : 'Your request for $clinicName was not approved. Admin access '
-                    'has not been granted.',
+                      'has not been granted.',
             iconBackground: AdminColors.errorContainer,
             iconColor: AdminColors.onErrorContainer,
             eyebrowColor: AdminColors.onErrorContainer,
@@ -81,18 +85,13 @@ class AdminRejectedScreen extends StatelessWidget {
                     label: 'Clinic',
                     value: '$clinicName (${request.requestedClinicId})',
                   ),
-                  AdminDetailRow(
-                    icon: Icons.confirmation_number_outlined,
-                    label: 'Request ID',
-                    value: request.id,
-                  ),
                   if (request.reviewedAt != null)
                     AdminDetailRow(
                       icon: Icons.event_available_outlined,
                       label: 'Reviewed',
-                      value: DateFormat.yMMMd()
-                          .add_jm()
-                          .format(request.reviewedAt!),
+                      value: DateFormat.yMMMd().add_jm().format(
+                        request.reviewedAt!,
+                      ),
                     ),
                   if (reason != null && reason.isNotEmpty)
                     AdminDetailRow(
@@ -114,8 +113,11 @@ class AdminRejectedScreen extends StatelessWidget {
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline_rounded,
-                    color: AdminColors.secondary, size: 20),
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: AdminColors.secondary,
+                  size: 20,
+                ),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -135,9 +137,9 @@ class AdminRejectedScreen extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           FilledButton.icon(
-            onPressed: () => Navigator.of(context).pushReplacementNamed(
-              AppRoutes.adminAccessRequest,
-            ),
+            onPressed: () =>
+                Navigator.of(context)
+                    .pushReplacementNamed(AppRoutes.adminAccessRequest),
             icon: const Icon(Icons.add_business_rounded, size: 19),
             label: const Text(
               'Request access for another clinic',
@@ -152,10 +154,7 @@ class AdminRejectedScreen extends StatelessWidget {
               backgroundColor: AdminColors.primary,
               foregroundColor: AdminColors.onPrimary,
               minimumSize: const Size.fromHeight(50),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
