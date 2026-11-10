@@ -592,19 +592,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     final picked = await _imagePicker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1200,
-      maxHeight: 1200,
-      imageQuality: 82,
+      maxWidth: 2400,
+      maxHeight: 2400,
+      imageQuality: 92,
     );
     if (picked == null || !mounted) return;
 
+    final originalBytes = await picked.readAsBytes();
+    if (!mounted) return;
+    final bytes = await showPhotoCropDialog(
+      context,
+      bytes: originalBytes,
+      aspectRatio: 1,
+      title: AppLocalizations.of(context).t('cropDoctorPhoto'),
+    );
+    if (bytes == null || !mounted) return;
+
     setState(() => _isUploadingPhoto = true);
     try {
-      final bytes = await picked.readAsBytes();
       final url = await _photoService.uploadDoctorPhoto(
         clinicId: clinic.clinicId,
         bytes: bytes,
-        fileName: picked.name,
+        fileName: '${picked.name}.png',
       );
       await _clinicRepository.updateClinic(clinic.clinicId, {
         'doctorPhotoUrl': url,
@@ -630,19 +639,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     final picked = await _imagePicker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1600,
-      maxHeight: 1200,
-      imageQuality: 84,
+      maxWidth: 2600,
+      maxHeight: 2600,
+      imageQuality: 92,
     );
     if (picked == null || !mounted) return;
 
+    final originalBytes = await picked.readAsBytes();
+    if (!mounted) return;
+    final bytes = await showPhotoCropDialog(
+      context,
+      bytes: originalBytes,
+      aspectRatio: 16 / 9,
+      title: AppLocalizations.of(context).t('cropClinicPhoto'),
+    );
+    if (bytes == null || !mounted) return;
+
     setState(() => _isUploadingClinicPhoto = true);
     try {
-      final bytes = await picked.readAsBytes();
       final url = await _photoService.uploadClinicPhoto(
         clinicId: clinic.clinicId,
         bytes: bytes,
-        fileName: picked.name,
+        fileName: '${picked.name}.png',
       );
       await _clinicRepository.updateClinic(clinic.clinicId, {
         'clinicPhotoUrl': url,
