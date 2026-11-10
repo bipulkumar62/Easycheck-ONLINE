@@ -3,14 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/localization/app_localizations.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/widgets/brand_mark.dart';
 import '../../core/widgets/google_sign_in_button.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/live_dot.dart';
 import '../legal/legal_screen.dart';
 import 'auth_error_mapper.dart';
 import 'auth_gate_screen.dart';
+import 'auth_session_store.dart';
 import 'google_auth_service.dart';
 
 /// Admin Google Auth Screen — "Clinical Precision" design system.
@@ -50,6 +53,30 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   bool _isSigningIn = false;
   String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeContinueSession());
+  }
+
+  /// Reuse an existing Firebase session instead of asking clinic staff to pick
+  /// their Google account again. Access is still verified by [AuthGateScreen].
+  Future<void> _maybeContinueSession() async {
+    if (!mounted || _isSigningIn) return;
+    try {
+      if (Firebase.apps.isEmpty) return;
+      if (FirebaseAuth.instance.currentUser == null) return;
+    } catch (_) {
+      return;
+    }
+    await AuthSessionStore.saveRole(AuthRole.admin);
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.authGate,
+      arguments: const AuthGateArgs(role: AuthRole.admin),
+    );
+  }
+
   Future<void> _handleGoogleSignIn() async {
     if (_isSigningIn) return;
     setState(() {
@@ -65,6 +92,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       }
 
       await GoogleAuthService().signIn();
+      await AuthSessionStore.saveRole(AuthRole.admin);
 
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(
@@ -104,6 +132,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: _ap_surface,
       body: LayoutBuilder(
@@ -130,6 +159,16 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   ),
                 ),
               ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: LanguageToggle(compact: true),
+                  ),
+                ),
+              ),
             ],
           );
         },
@@ -140,6 +179,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   // ── Desktop brand panel ────────────────────────────────────────────────────
 
   Widget _buildBrandPanel() {
+    final l10n = AppLocalizations.of(context);
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -182,9 +222,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         const SizedBox(height: 72),
                         _buildAccessBadge(),
                         const SizedBox(height: 22),
-                        const Text(
-                          'Run your clinic with\ncalm precision.',
-                          style: TextStyle(
+                        Text(
+                          l10n.t('runClinicWithPrecision'),
+                          style: const TextStyle(
                             fontFamily: 'Plus Jakarta Sans',
                             fontSize: 42,
                             fontWeight: FontWeight.w700,
@@ -194,10 +234,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        const Text(
-                          'Live queue control, patient flow and verified staff '
-                          'access in one operational view.',
-                          style: TextStyle(
+                        Text(
+                          l10n.t('runClinicSubtitle'),
+                          style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
                             height: 1.6,
@@ -207,23 +246,20 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         const SizedBox(height: 42),
                         _buildFeatureRow(
                           icon: Icons.queue_rounded,
-                          title: 'Live queue control',
-                          description:
-                              'Update parchi counts and clinic status in real time.',
+                          title: l10n.t('liveQueueControl'),
+                          description: l10n.t('liveQueueControlBody'),
                         ),
                         const SizedBox(height: 20),
                         _buildFeatureRow(
                           icon: Icons.insights_rounded,
-                          title: 'Patient flow visibility',
-                          description:
-                              'Keep the front desk and consulting room aligned.',
+                          title: l10n.t('patientFlowVisibility'),
+                          description: l10n.t('patientFlowVisibilityBody'),
                         ),
                         const SizedBox(height: 20),
                         _buildFeatureRow(
                           icon: Icons.verified_user_rounded,
-                          title: 'Role-verified access',
-                          description:
-                              'Only approved clinic members can open the console.',
+                          title: l10n.t('roleVerifiedAccess'),
+                          description: l10n.t('roleVerifiedAccessBody'),
                         ),
                         const SizedBox(height: 48),
                         _buildBrandFooter(),
@@ -284,6 +320,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Widget _buildAccessBadge() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
@@ -304,10 +341,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: const Text(
-                'SECURE STAFF ACCESS',
+              child: Text(
+                l10n.t('secureStaffAccess'),
                 maxLines: 1,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -372,6 +409,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Widget _buildBrandFooter() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -389,10 +427,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               color: Color(0xFF8CE8BC),
             ),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Authorized clinic staff only. Access is verified after sign-in.',
-                style: TextStyle(
+                l10n.t('staffAccessOnly'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 11.5,
                   height: 1.45,
@@ -453,6 +491,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Widget _buildFormHeader() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -460,12 +499,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           children: [
             const BrandMark(size: 42, padding: 5, radius: 12),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
-                'CLINIC ADMIN',
+                l10n.t('clinicAdminTitle').toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
@@ -477,9 +516,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           ],
         ),
         const SizedBox(height: 18),
-        const Text(
-          'Clinic Admin',
-          style: TextStyle(
+        Text(
+          l10n.t('clinicAdminTitle'),
+          style: const TextStyle(
             fontFamily: 'Plus Jakarta Sans',
             fontSize: 32,
             fontWeight: FontWeight.w700,
@@ -489,9 +528,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Sign in to manage your clinic.',
-          style: TextStyle(
+        Text(
+          l10n.t('adminSignInSubtitle'),
+          style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
             height: 1.5,
@@ -531,6 +570,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Widget _buildMobileHero() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -572,9 +612,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   const SizedBox(height: 26),
                   _buildAccessBadge(),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Clinic Admin',
-                    style: TextStyle(
+                  Text(
+                    l10n.t('clinicAdminTitle'),
+                    style: const TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
@@ -584,9 +624,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Sign in to manage your clinic.',
-                    style: TextStyle(
+                  Text(
+                    l10n.t('adminSignInSubtitle'),
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       height: 1.5,
@@ -597,18 +637,18 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: const [
+                    children: [
                       _MobileFeatureChip(
                         icon: Icons.queue_rounded,
-                        label: 'Live queue',
+                        label: l10n.t('liveQueueTab'),
                       ),
                       _MobileFeatureChip(
                         icon: Icons.insights_rounded,
-                        label: 'Patient flow',
+                        label: l10n.t('patientFlowVisibility'),
                       ),
                       _MobileFeatureChip(
                         icon: Icons.verified_user_rounded,
-                        label: 'Verified access',
+                        label: l10n.t('roleVerifiedAccess'),
                       ),
                     ],
                   ),
@@ -624,6 +664,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   // ── Shared form pieces ─────────────────────────────────────────────────────
 
   Widget _buildAuthCard() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -662,23 +703,23 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Secure staff sign-in',
-                      style: TextStyle(
+                      l10n.t('secureStaffSignIn'),
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
                         color: _ap_onSurface,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Use your clinic Google account',
-                      style: TextStyle(
+                      l10n.t('useClinicGoogleAccount'),
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         color: _ap_muted,
@@ -693,16 +734,16 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           GoogleSignInButton(
             onPressed: _handleGoogleSignIn,
             isLoading: _isSigningIn,
-            subtitle: 'Verified clinic staff sign-in',
+            subtitle: l10n.t('verifiedClinicStaffSignIn'),
             accentColor: _ap_primary,
           ),
           if (_hasSignedInAccount) ...[
             const SizedBox(height: 4),
             TextButton(
               onPressed: _isSigningIn ? null : _useDifferentAccount,
-              child: const Text(
-                'Use a different Google account',
-                style: TextStyle(
+              child: Text(
+                l10n.t('useDifferentAccount'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -722,7 +763,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      'VERIFIED ACCESS',
+                      l10n.t('verifiedAccess'),
                       maxLines: 1,
                       style: TextStyle(
                         fontFamily: 'Inter',
@@ -741,17 +782,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           const SizedBox(height: 18),
           _buildTrustRow(
             icon: Icons.verified_user_rounded,
-            text: 'Clinic membership is checked after sign-in.',
+            text: l10n.t('clinicMembershipChecked'),
           ),
           const SizedBox(height: 10),
           _buildTrustRow(
             icon: Icons.lock_outline_rounded,
-            text: 'EasyCheck never stores your Google password.',
+            text: l10n.t('neverStoresPassword'),
           ),
           const SizedBox(height: 10),
           _buildTrustRow(
             icon: Icons.support_agent_rounded,
-            text: 'New staff can request access from the next screen.',
+            text: l10n.t('newStaffRequestAccess'),
           ),
           if (_error != null) ...[
             const SizedBox(height: 18),
@@ -787,6 +828,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Widget _buildFormFooter() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         Row(
@@ -800,7 +842,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                'Authorized clinic staff only',
+                l10n.t('authorizedStaffOnly'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Inter',
@@ -819,7 +861,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           spacing: 4,
           children: [
             _AdminLegalLink(
-              label: 'Privacy Policy',
+              label: l10n.t('privacyPolicy'),
               onTap: () => _openLegal(LegalDocument.privacy),
             ),
             const Text(
@@ -831,7 +873,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               ),
             ),
             _AdminLegalLink(
-              label: 'Terms of Use',
+              label: l10n.t('termsOfUse'),
               onTap: () => _openLegal(LegalDocument.terms),
             ),
           ],
@@ -839,9 +881,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         const SizedBox(height: 2),
         TextButton(
           onPressed: _backToRoleSelection,
-          child: const Text(
-            'Back to role selection',
-            style: TextStyle(
+          child: Text(
+            l10n.t('backToRoleSelection'),
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -869,7 +911,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       ),
       elevation: 0,
       child: IconButton(
-        tooltip: 'Back to role selection',
+        tooltip: AppLocalizations.of(context).t('backToRoleSelection'),
         onPressed: _backToRoleSelection,
         icon: const Icon(
           Icons.arrow_back_rounded,

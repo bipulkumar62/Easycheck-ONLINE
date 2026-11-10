@@ -7,13 +7,17 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../../app/localization/app_localizations.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_typography.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../core/widgets/brand_mark.dart';
 import '../../core/errors/app_failure.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/live_dot.dart';
+import '../../core/widgets/photo_crop_dialog.dart';
 import '../authentication/admin_access_request_model.dart';
 import '../authentication/admin_access_service.dart';
 import '../clinics/clinic_membership_model.dart';
@@ -58,6 +62,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   StreamSubscription<QueueSessionModel?>? _sessionSubscription;
   QueueSessionModel? _session;
   int _count = 0;
+  int _lastServerCount = 0;
+  int _pendingCounterDelta = 0;
+  bool _counterSyncing = false;
   Future<List<ClinicMembershipModel>>? _membersFuture;
 
   DateTime get _now => DateTime.now();
@@ -142,11 +149,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           .listen(
             (session) {
               if (!mounted) return;
+              final serverCount =
+                  session?.currentParchaNumber ?? loadedClinic.todayParchiCount;
               setState(() {
                 _session = session;
-                _count =
-                    session?.currentParchaNumber ??
-                    loadedClinic.todayParchiCount;
+                _lastServerCount = serverCount;
+                // Do not let a live snapshot overwrite a value the user just
+                // changed optimistically while the write is still in flight.
+                if (_pendingCounterDelta == 0 && !_counterSyncing) {
+                  _count = serverCount;
+                }
               });
             },
             onError: (_) {
@@ -244,41 +256,72 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Future<void> _increment() async {
     final clinic = _clinic;
-    if (clinic == null || _busy) return;
+    if (clinic == null) return;
     if (!_isActive) {
-      _showMessage('This queue session is not active.');
+      _showMessage(AppLocalizations.of(context).t('thisQueueNotActive'));
       return;
     }
-    setState(() => _busy = true);
-    try {
-      final value = await _queueRepository.incrementParcha(
-        clinic.clinicId,
-        _dateKey,
-        _user?.uid ?? 'system',
-      );
-      if (mounted) setState(() => _count = value);
-    } catch (error) {
-      _showMessage('Could not update the counter: $error');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+
+    // Update the visible number immediately. Firestore is reconciled in the
+    // background so a fast tap never waits for the network round-trip.
+    setState(() {
+      _count += 1;
+      _pendingCounterDelta += 1;
+    });
+    unawaited(_drainCounterQueue());
   }
 
   Future<void> _decrement() async {
     final clinic = _clinic;
-    if (clinic == null || _busy || _count <= 0) return;
-    setState(() => _busy = true);
+    if (clinic == null || _count <= 0) return;
+
+    setState(() {
+      _count -= 1;
+      _pendingCounterDelta -= 1;
+    });
+    unawaited(_drainCounterQueue());
+  }
+
+  Future<void> _drainCounterQueue() async {
+    if (_counterSyncing) return;
+    _counterSyncing = true;
+    final clinic = _clinic;
+    if (clinic == null) {
+      _counterSyncing = false;
+      return;
+    }
+
     try {
-      final value = await _queueRepository.decrementParcha(
-        clinic.clinicId,
-        _dateKey,
-        _user?.uid ?? 'system',
-      );
-      if (mounted) setState(() => _count = value);
+      while (_pendingCounterDelta != 0) {
+        final delta = _pendingCounterDelta;
+        final value = delta > 0
+            ? await _queueRepository.incrementParcha(
+                clinic.clinicId,
+                _dateKey,
+                _user?.uid ?? 'system',
+              )
+            : await _queueRepository.decrementParcha(
+                clinic.clinicId,
+                _dateKey,
+                _user?.uid ?? 'system',
+              );
+
+        _lastServerCount = value;
+        _pendingCounterDelta += delta > 0 ? -1 : 1;
+        if (!mounted) return;
+        setState(() {
+          _count = value + _pendingCounterDelta;
+        });
+      }
     } catch (error) {
-      _showMessage('Could not update the counter: $error');
+      if (!mounted) return;
+      setState(() {
+        _pendingCounterDelta = 0;
+        _count = _lastServerCount;
+      });
+      _showMessage(AppLocalizations.of(context).t('couldNotUpdateCounter'));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      _counterSyncing = false;
     }
   }
 

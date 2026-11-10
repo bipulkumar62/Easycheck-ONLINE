@@ -1,20 +1,68 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/localization/app_localizations.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/theme/app_colors.dart';
 import '../../core/widgets/brand_mark.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../legal/legal_screen.dart';
+import 'auth_gate_screen.dart';
+import 'auth_session_store.dart';
 
 /// Initial role selection screen — "Clinical Clarity" design system.
 ///
 /// This is the entry route for every user. The selected role is only a UX
 /// choice; all privileged access is resolved again from the authenticated
 /// Firebase UID after Google sign-in.
-class RoleSelectionScreen extends StatelessWidget {
+///
+/// When a Firebase session already exists, the last used experience is resumed
+/// automatically so patients and clinic staff are not asked to sign in again.
+class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
 
   @override
+  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+}
+
+class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeResumeSession());
+  }
+
+  Future<void> _maybeResumeSession() async {
+    if (AuthSessionStore.autoResumeAttempted) return;
+    try {
+      if (Firebase.apps.isEmpty) return;
+      if (FirebaseAuth.instance.currentUser == null) return;
+    } catch (_) {
+      return;
+    }
+
+    AuthSessionStore.markAutoResumeAttempted();
+    final role = await AuthSessionStore.loadRole();
+    if (!mounted || role == null) return;
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.authGate,
+      arguments: AuthGateArgs(role: role),
+    );
+  }
+
+  void _continueAs(AuthRole role) {
+    unawaited(AuthSessionStore.saveRole(role));
+    Navigator.of(context).pushNamed(
+      role == AuthRole.admin ? AppRoutes.adminLogin : AppRoutes.patientLogin,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: PatientColors.surface,
       body: Stack(
@@ -28,7 +76,9 @@ class RoleSelectionScreen extends StatelessWidget {
                 width: 280,
                 height: 280,
                 decoration: BoxDecoration(
-                  color: PatientColors.secondaryContainer.withValues(alpha: 0.18),
+                  color: PatientColors.secondaryContainer.withValues(
+                    alpha: 0.18,
+                  ),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -42,10 +92,21 @@ class RoleSelectionScreen extends StatelessWidget {
                 width: 300,
                 height: 300,
                 decoration: BoxDecoration(
-                  color: PatientColors.surfaceContainerHighest
-                      .withValues(alpha: 0.55),
+                  color: PatientColors.surfaceContainerHighest.withValues(
+                    alpha: 0.55,
+                  ),
                   shape: BoxShape.circle,
                 ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, right: 16),
+                child: LanguageToggle(compact: true),
               ),
             ),
           ),
@@ -61,43 +122,35 @@ class RoleSelectionScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildBrand(),
+                      _buildBrand(l10n),
                       const SizedBox(height: 32),
-                      _buildHeading(),
+                      _buildHeading(l10n),
                       const SizedBox(height: 24),
                       _RoleCard(
                         icon: Icons.person_rounded,
                         iconBackground: PatientColors.primaryFixed,
                         iconColor: PatientColors.primary,
-                        title: 'Patient',
-                        description:
-                            'Check clinic availability, live parchi updates and '
-                            'your doctor’s queue.',
-                        buttonLabel: 'Continue as Patient',
+                        title: l10n.t('patientRole'),
+                        description: l10n.t('patientRoleDescription'),
+                        buttonLabel: l10n.t('patientRoleButton'),
                         buttonColor: PatientColors.primary,
                         buttonKey: const Key('role_patient_button'),
-                        onPressed: () => Navigator.of(context).pushNamed(
-                          AppRoutes.patientLogin,
-                        ),
+                        onPressed: () => _continueAs(AuthRole.patient),
                       ),
                       const SizedBox(height: 16),
                       _RoleCard(
                         icon: Icons.medical_services_rounded,
                         iconBackground: PatientColors.secondaryFixed,
                         iconColor: PatientColors.secondary,
-                        title: 'Doctor / Staff',
-                        description:
-                            'Manage your clinic’s live queue and patient flow. '
-                            'Clinic access is verified before the dashboard opens.',
-                        buttonLabel: 'Continue as Doctor/Staff',
+                        title: l10n.t('staffRole'),
+                        description: l10n.t('staffRoleDescription'),
+                        buttonLabel: l10n.t('staffRoleButton'),
                         buttonColor: PatientColors.secondary,
                         buttonKey: const Key('role_admin_button'),
-                        onPressed: () => Navigator.of(context).pushNamed(
-                          AppRoutes.adminLogin,
-                        ),
+                        onPressed: () => _continueAs(AuthRole.admin),
                       ),
                       const SizedBox(height: 24),
-                      _buildFooter(context),
+                      _buildFooter(context, l10n),
                     ],
                   ),
                 ),
@@ -109,16 +162,16 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBrand() {
+  Widget _buildBrand(AppLocalizations l10n) {
     return Column(
       children: [
         const BrandMark(size: 66, padding: 8, radius: 18),
         const SizedBox(height: 14),
-        FittedBox(
+        const FittedBox(
           fit: BoxFit.scaleDown,
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Text(
                 'EasyCheck',
                 style: TextStyle(
@@ -145,7 +198,7 @@ class RoleSelectionScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'CARE, CONNECTED',
+          l10n.t('careConnected'),
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 11,
@@ -158,14 +211,14 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeading() {
+  Widget _buildHeading(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
-          'Aap kis roop mein continue karna chahte hain?',
+        Text(
+          l10n.t('roleHeading'),
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 26,
             fontWeight: FontWeight.w700,
@@ -176,8 +229,7 @@ class RoleSelectionScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Choose how you want to use EasyCheck. You can switch later by '
-          'signing out.',
+          l10n.t('roleSubtitle'),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'Inter',
@@ -190,7 +242,7 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter(BuildContext context, AppLocalizations l10n) {
     return Column(
       children: [
         Row(
@@ -204,7 +256,7 @@ class RoleSelectionScreen extends StatelessWidget {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                'Secure sign-in with your Google account',
+                l10n.t('secureGoogleSignIn'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Inter',
@@ -223,7 +275,7 @@ class RoleSelectionScreen extends StatelessWidget {
           spacing: 4,
           children: [
             _LegalLink(
-              label: 'Privacy Policy',
+              label: l10n.t('privacyPolicy'),
               onTap: () => _openLegal(context, LegalDocument.privacy),
             ),
             const Text(
@@ -235,7 +287,7 @@ class RoleSelectionScreen extends StatelessWidget {
               ),
             ),
             _LegalLink(
-              label: 'Terms of Use',
+              label: l10n.t('termsOfUse'),
               onTap: () => _openLegal(context, LegalDocument.terms),
             ),
           ],
@@ -246,9 +298,7 @@ class RoleSelectionScreen extends StatelessWidget {
 
   void _openLegal(BuildContext context, LegalDocument document) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => LegalScreen(document: document),
-      ),
+      MaterialPageRoute<void>(builder: (_) => LegalScreen(document: document)),
     );
   }
 }
@@ -358,8 +408,9 @@ class _RoleCard extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        color: PatientColors.onSurfaceVariant
-                            .withValues(alpha: 0.95),
+                        color: PatientColors.onSurfaceVariant.withValues(
+                          alpha: 0.95,
+                        ),
                         height: 1.45,
                       ),
                     ),

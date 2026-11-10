@@ -20,6 +20,7 @@ import '../features/clinics/clinic_model.dart' as firestore_clinic;
 import '../features/patient/patient_home_screen.dart';
 import '../shared/models/clinic_model.dart' as display_clinic;
 import 'localization/app_localizations.dart';
+import 'localization/locale_controller.dart';
 import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 
@@ -33,104 +34,111 @@ class EasyCheckApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'EasyCheck Online',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.patientTheme,
-      locale: AppLocalizations.defaultLocale,
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      builder: (context, child) {
-        final surface = Theme.of(context).scaffoldBackgroundColor;
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark,
-            statusBarBrightness: Brightness.light,
-            systemNavigationBarColor: surface,
-            systemNavigationBarIconBrightness: Brightness.dark,
-            systemNavigationBarDividerColor: Colors.transparent,
-          ),
-          child: child ?? const SizedBox.shrink(),
+    return AnimatedBuilder(
+      animation: LocaleController.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'EasyCheck Online',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.patientTheme,
+          locale: LocaleController.instance.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          builder: (context, child) {
+            final surface = Theme.of(context).scaffoldBackgroundColor;
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+                systemNavigationBarColor: surface,
+                systemNavigationBarIconBrightness: Brightness.dark,
+                systemNavigationBarDividerColor: Colors.transparent,
+              ),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          initialRoute: AppRoutes.initial,
+          routes: {
+            AppRoutes.initial: (_) => const RoleSelectionScreen(),
+            AppRoutes.patientLogin: (_) => const PatientLoginScreen(),
+            AppRoutes.authGate: (context) {
+              final arguments = ModalRoute.of(context)?.settings.arguments;
+              final role = arguments is AuthGateArgs
+                  ? arguments.role
+                  : AuthRole.patient;
+              final screen = AuthGateScreen(role: role);
+              return role == AuthRole.admin
+                  ? _AdminThemed(child: screen)
+                  : screen;
+            },
+            AppRoutes.patientHome: (_) => const PatientHomeScreen(),
+            AppRoutes.patientClinicDetails: (context) {
+              final arguments = ModalRoute.of(context)?.settings.arguments;
+              if (arguments is display_clinic.ClinicModel) {
+                return ClinicDetailsScreen(clinic: arguments);
+              }
+              if (arguments is firestore_clinic.ClinicModel) {
+                return ClinicDetailsScreen(clinic: arguments.toDisplayModel());
+              }
+              return const PatientHomeScreen();
+            },
+            AppRoutes.adminLogin: (_) =>
+                _AdminThemed(child: const AdminLoginScreen()),
+            AppRoutes.adminDashboard: (_) =>
+                _AdminThemed(child: const AdminDashboardScreen()),
+            AppRoutes.adminResetStudio: (_) =>
+                _AdminThemed(child: const AdminResetStudioScreen()),
+            AppRoutes.adminUnauthorized: (context) {
+              final arguments = ModalRoute.of(context)?.settings.arguments;
+              return _AdminThemed(
+                child: AdminUnauthorizedScreen(
+                  message: arguments is String ? arguments : null,
+                ),
+              );
+            },
+            AppRoutes.adminInactive: (context) {
+              final arguments = ModalRoute.of(context)?.settings.arguments;
+              final clinic = arguments is firestore_clinic.ClinicModel
+                  ? arguments
+                  : null;
+              return _AdminThemed(
+                child: AdminSubscriptionInactiveScreen(clinic: clinic),
+              );
+            },
+            AppRoutes.adminAccessRequest: (_) =>
+                _AdminThemed(child: const AdminAccessRequestScreen()),
+            AppRoutes.adminRequestSubmitted: (context) {
+              final arguments = ModalRoute.of(context)?.settings.arguments;
+              return _AdminThemed(
+                child: AdminRequestSubmittedScreen(
+                  args: arguments is AdminAccessFlowArgs ? arguments : null,
+                ),
+              );
+            },
+            AppRoutes.adminPendingApproval: (context) {
+              final arguments = ModalRoute.of(context)?.settings.arguments;
+              return _AdminThemed(
+                child: AdminPendingApprovalScreen(
+                  args: arguments is AdminAccessFlowArgs ? arguments : null,
+                ),
+              );
+            },
+            AppRoutes.adminRejected: (context) {
+              final arguments = ModalRoute.of(context)?.settings.arguments;
+              return _AdminThemed(
+                child: AdminRejectedScreen(
+                  args: arguments is AdminAccessFlowArgs ? arguments : null,
+                ),
+              );
+            },
+          },
         );
-      },
-      initialRoute: AppRoutes.initial,
-      routes: {
-        AppRoutes.initial: (_) => const RoleSelectionScreen(),
-        AppRoutes.patientLogin: (_) => const PatientLoginScreen(),
-        AppRoutes.authGate: (context) {
-          final arguments = ModalRoute.of(context)?.settings.arguments;
-          final role = arguments is AuthGateArgs
-              ? arguments.role
-              : AuthRole.patient;
-          final screen = AuthGateScreen(role: role);
-          return role == AuthRole.admin ? _AdminThemed(child: screen) : screen;
-        },
-        AppRoutes.patientHome: (_) => const PatientHomeScreen(),
-        AppRoutes.patientClinicDetails: (context) {
-          final arguments = ModalRoute.of(context)?.settings.arguments;
-          if (arguments is display_clinic.ClinicModel) {
-            return ClinicDetailsScreen(clinic: arguments);
-          }
-          if (arguments is firestore_clinic.ClinicModel) {
-            return ClinicDetailsScreen(clinic: arguments.toDisplayModel());
-          }
-          return const PatientHomeScreen();
-        },
-        AppRoutes.adminLogin: (_) =>
-            _AdminThemed(child: const AdminLoginScreen()),
-        AppRoutes.adminDashboard: (_) =>
-            _AdminThemed(child: const AdminDashboardScreen()),
-        AppRoutes.adminResetStudio: (_) =>
-            _AdminThemed(child: const AdminResetStudioScreen()),
-        AppRoutes.adminUnauthorized: (context) {
-          final arguments = ModalRoute.of(context)?.settings.arguments;
-          return _AdminThemed(
-            child: AdminUnauthorizedScreen(
-              message: arguments is String ? arguments : null,
-            ),
-          );
-        },
-        AppRoutes.adminInactive: (context) {
-          final arguments = ModalRoute.of(context)?.settings.arguments;
-          final clinic = arguments is firestore_clinic.ClinicModel
-              ? arguments
-              : null;
-          return _AdminThemed(
-            child: AdminSubscriptionInactiveScreen(clinic: clinic),
-          );
-        },
-        AppRoutes.adminAccessRequest: (_) =>
-            _AdminThemed(child: const AdminAccessRequestScreen()),
-        AppRoutes.adminRequestSubmitted: (context) {
-          final arguments = ModalRoute.of(context)?.settings.arguments;
-          return _AdminThemed(
-            child: AdminRequestSubmittedScreen(
-              args: arguments is AdminAccessFlowArgs ? arguments : null,
-            ),
-          );
-        },
-        AppRoutes.adminPendingApproval: (context) {
-          final arguments = ModalRoute.of(context)?.settings.arguments;
-          return _AdminThemed(
-            child: AdminPendingApprovalScreen(
-              args: arguments is AdminAccessFlowArgs ? arguments : null,
-            ),
-          );
-        },
-        AppRoutes.adminRejected: (context) {
-          final arguments = ModalRoute.of(context)?.settings.arguments;
-          return _AdminThemed(
-            child: AdminRejectedScreen(
-              args: arguments is AdminAccessFlowArgs ? arguments : null,
-            ),
-          );
-        },
       },
     );
   }

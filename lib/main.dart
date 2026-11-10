@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 
 import 'firebase_options.dart';
 import 'app/app.dart';
+import 'app/localization/locale_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +70,8 @@ void main() async {
       // Crash reporting must never prevent the app from starting.
     }
   }
+
+  await LocaleController.instance.load();
 
   runZonedGuarded<Future<void>>(
     () async {

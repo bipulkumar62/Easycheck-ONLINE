@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../app/localization/app_localizations.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 import '../../app/theme/app_spacing.dart';
@@ -176,6 +177,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
   /// Fixed Top App Bar with back navigation.
   Widget _buildTopAppBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Container(
@@ -205,7 +207,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     padding: EdgeInsets.zero,
                     splashRadius: 22.0,
-                    tooltip: 'Go back',
+                    tooltip: l10n.t('goBack'),
                   ),
                 ),
 
@@ -219,7 +221,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 // Screen Title
                 Expanded(
                   child: Text(
-                    'Clinic Details',
+                    l10n.t('clinicDetails'),
                     style: PatientTypography.titleMd.copyWith(
                       color: PatientColors.primary,
                       fontWeight: FontWeight.w600,
@@ -253,6 +255,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   /// A disabled clinic stays visible so patients get an honest offline state
   /// instead of a clinic that silently disappears from the list.
   Widget _buildSubscriptionInactiveBanner(ClinicModel clinic) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.spaceMd),
       decoration: BoxDecoration(
@@ -273,7 +276,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Clinic offline · Subscription inactive',
+                  l10n.t('clinicOfflineSubscription'),
                   style: PatientTypography.titleMd.copyWith(
                     color: PatientColors.onErrorContainer,
                     fontWeight: FontWeight.w700,
@@ -281,8 +284,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 ),
                 const SizedBox(height: 4.0),
                 Text(
-                  '${clinic.name} is disabled by the network administrator. The '
-                  'live queue is paused, so please check back later.',
+                  l10n.t('clinicDisabledBody').replaceAll(
+                    '{clinic}',
+                    clinic.name,
+                  ),
                   style: PatientTypography.bodySm.copyWith(
                     color: PatientColors.onErrorContainer,
                     height: 1.4,
@@ -402,6 +407,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   }
 
   Widget _buildDoctorInfo(ClinicModel clinic, bool isAvailable) {
+    final l10n = AppLocalizations.of(context);
     final doctorName = clinic.doctor.name.isNotEmpty
         ? clinic.doctor.name
         : clinic.name;
@@ -410,7 +416,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'DOCTOR PROFILE',
+          l10n.t('doctorProfile'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: PatientTypography.labelSm.copyWith(
@@ -481,7 +487,9 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               ],
               Flexible(
                 child: Text(
-                  isAvailable ? 'Currently Available' : 'Not Available',
+                  isAvailable
+                      ? l10n.t('currentlyAvailable')
+                      : l10n.t('notAvailable'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: PatientTypography.labelMd.copyWith(
@@ -559,7 +567,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 const SizedBox(height: 3.0),
                 Text(
                   clinic.address.trim().isEmpty
-                      ? 'Address not listed'
+                      ? l10n.t('addressNotListed')
                       : clinic.address,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -621,6 +629,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
   /// 2. Live Parchi Counter Card Section
   Widget _buildParchiCounterCard(ClinicModel clinic) {
+    final l10n = AppLocalizations.of(context);
     final count = _displayCount;
     final yesterday = clinic.yesterdayParchiCount ?? 0;
 
@@ -663,7 +672,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     const SizedBox(width: 8.0),
                     Flexible(
                       child: Text(
-                        "Today's Parchi Count",
+                        l10n.t('todaysParchiCount'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: PatientTypography.titleMd.copyWith(
@@ -703,7 +712,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       ),
                     const SizedBox(width: 5.0),
                     Text(
-                      clinic.isActive ? 'Live' : 'Paused',
+                      clinic.isActive ? l10n.t('live') : l10n.t('paused'),
                       style: PatientTypography.labelMd.copyWith(
                         color: clinic.isActive
                             ? PatientColors.onSecondaryContainer
@@ -769,7 +778,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       const SizedBox(width: 6.0),
                       Flexible(
                         child: Text(
-                          'Live clinic counter',
+                          l10n.t('liveClinicCounter'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: PatientTypography.labelSm.copyWith(
@@ -796,8 +805,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     Flexible(
                       child: Text(
                         _lastUpdate == null
-                            ? 'Waiting for the clinic’s live counter'
-                            : 'Live · updated ${_formatTime(_lastUpdate!)}',
+                            ? l10n.t('waitingForLiveCounter')
+                            : l10n.liveUpdated(_formatTime(_lastUpdate!)),
                         style: PatientTypography.labelMd.copyWith(
                           color: PatientColors.onSurfaceVariant,
                         ),
@@ -827,7 +836,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Yesterday',
+                        l10n.t('yesterday'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: PatientTypography.labelMd.copyWith(
@@ -855,7 +864,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                           ),
                           const SizedBox(width: 4.0),
                           Text(
-                            'slips',
+                            l10n.t('slips'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: PatientTypography.labelSm.copyWith(
@@ -866,7 +875,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       ),
                       const SizedBox(height: 2.0),
                       Text(
-                        'Previous day’s parchi count',
+                        l10n.t('previousDayParchi'),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: PatientTypography.labelSm.copyWith(
@@ -893,7 +902,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Today',
+                        l10n.t('today'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: PatientTypography.labelMd.copyWith(
@@ -922,7 +931,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                           ),
                           const SizedBox(width: 4.0),
                           Text(
-                            'slips',
+                            l10n.t('slips'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: PatientTypography.labelSm.copyWith(
@@ -933,7 +942,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       ),
                       const SizedBox(height: 2.0),
                       Text(
-                        'Current day’s live count',
+                        l10n.t('currentDayLive'),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: PatientTypography.labelSm.copyWith(
@@ -954,6 +963,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
   /// 3. Planning Your Visit Guidance Card
   Widget _buildPlanningVisitCard() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.spaceLg),
       decoration: BoxDecoration(
@@ -982,7 +992,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Planning Your Visit',
+                  l10n.t('planningYourVisit'),
                   style: PatientTypography.titleMd.copyWith(
                     color: PatientColors.primary,
                     fontWeight: FontWeight.w600,
@@ -990,7 +1000,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 ),
                 const SizedBox(height: 4.0),
                 Text(
-                  'A little more clarity before your visit. Check the latest clinic updates and plan your time with greater confidence.',
+                  l10n.t('planningBody'),
                   style: PatientTypography.bodyMd.copyWith(
                     color: PatientColors.onSurface,
                     height: 1.45,
@@ -1006,6 +1016,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
   /// 4. Off-Hours & Doctor Leave Notice Card (Informative Preview)
   Widget _buildOffHoursNoticeCard() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.spaceLg),
       decoration: BoxDecoration(
@@ -1027,7 +1038,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               const SizedBox(width: 8.0),
               Expanded(
                 child: Text(
-                  'Off-Hours & Doctor Leave Notice',
+                  l10n.t('offHoursNotice'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: PatientTypography.titleMd.copyWith(
@@ -1051,7 +1062,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      'Standard Protocol',
+                      l10n.t('standardProtocol'),
                       maxLines: 1,
                       style: PatientTypography.labelSm.copyWith(
                         color: PatientColors.onSurfaceVariant,
@@ -1066,7 +1077,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
           const SizedBox(height: 10.0),
 
           Text(
-            'When clinic session is closed or doctor is unavailable, a calm notice replaces the active count rather than an ambiguous status.',
+            l10n.t('offHoursBody'),
             style: PatientTypography.bodySm.copyWith(
               color: PatientColors.onSurfaceVariant,
               height: 1.4,
@@ -1098,7 +1109,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 const SizedBox(width: 8.0),
                 Expanded(
                   child: Text(
-                    'Session Closed · Offline',
+                    l10n.t('sessionClosedOffline'),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: PatientTypography.bodySm.copyWith(

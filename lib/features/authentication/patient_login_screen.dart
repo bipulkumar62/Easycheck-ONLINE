@@ -2,15 +2,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/localization/app_localizations.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/constants/asset_constants.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/widgets/brand_mark.dart';
 import '../../core/widgets/google_sign_in_button.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/live_dot.dart';
 import '../legal/legal_screen.dart';
 import 'auth_error_mapper.dart';
 import 'auth_gate_screen.dart';
+import 'auth_session_store.dart';
 import 'google_auth_service.dart';
 
 /// Patient Google Login Screen — "Clinical Clarity" design system.
@@ -26,6 +29,30 @@ class PatientLoginScreen extends StatefulWidget {
 class _PatientLoginScreenState extends State<PatientLoginScreen> {
   bool _isSigningIn = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeContinueSession());
+  }
+
+  /// A valid Firebase session already means the patient has signed in. Skip the
+  /// Google account picker and go straight to the verification screen.
+  Future<void> _maybeContinueSession() async {
+    if (!mounted || _isSigningIn) return;
+    try {
+      if (Firebase.apps.isEmpty) return;
+      if (FirebaseAuth.instance.currentUser == null) return;
+    } catch (_) {
+      return;
+    }
+    await AuthSessionStore.saveRole(AuthRole.patient);
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.authGate,
+      arguments: const AuthGateArgs(role: AuthRole.patient),
+    );
+  }
 
   // Clinical Clarity color tokens from Stitch tailwind config
   static const Color _surface = Color(0xFFF8F9FF);
@@ -58,6 +85,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
       }
 
       await GoogleAuthService().signIn();
+      await AuthSessionStore.saveRole(AuthRole.patient);
 
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(
@@ -99,6 +127,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: Stack(
@@ -184,7 +213,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
                   color: _surfaceContainerLowest.withValues(alpha: 0.92),
                   shape: const CircleBorder(),
                   child: IconButton(
-                    tooltip: 'Back to role selection',
+                    tooltip: l10n.t('backToRoleSelection'),
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: const Icon(
                       Icons.arrow_back_rounded,
@@ -192,6 +221,30 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
                       size: 22,
                     ),
                   ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: _surfaceContainerLowest.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: const LanguageToggle(compact: true),
                 ),
               ),
             ),
@@ -261,7 +314,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
 
                             // Subtitle: OFFICIAL PATIENT PORTAL
                             Text(
-                              'OFFICIAL PATIENT PORTAL',
+                              l10n.t('officialPatientPortal'),
                               style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 11,
@@ -293,9 +346,9 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
                               TextButton(
                                 onPressed:
                                     _isSigningIn ? null : _useDifferentAccount,
-                                child: const Text(
-                                  'Use a different Google account',
-                                  style: TextStyle(
+                                child: Text(
+                                  l10n.t('useDifferentAccount'),
+                                  style: const TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -324,6 +377,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   }
 
   Widget _buildLivePill() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -346,12 +400,12 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
             semanticsLabel: 'Real-time clinic updates',
           ),
           const SizedBox(width: 8),
-          const Flexible(
+          Flexible(
             child: Text(
-              'REAL-TIME CLINIC UPDATES',
+              l10n.t('realTimeClinicUpdates'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -366,6 +420,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   }
 
   Widget _buildValueCard() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -387,15 +442,15 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
               // Feature Header: verified icon + label
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Icon(Icons.verified_rounded, color: _secondary, size: 18),
-                  SizedBox(width: 6),
+                children: [
+                  const Icon(Icons.verified_rounded, color: _secondary, size: 18),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Real-time OPD & Parchi Tracker',
+                      l10n.t('opdParchiTracker'),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -409,9 +464,9 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
               const SizedBox(height: 10),
 
               // H1: Your doctor, closer than ever.
-              const Text(
-                'Your doctor, closer than ever.',
-                style: TextStyle(
+              Text(
+                l10n.t('patientLoginHeadline'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
@@ -424,9 +479,9 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
               const SizedBox(height: 8),
 
               // Body description
-              const Text(
-                'Check your clinic\'s availability and live parchi updates in one calm, unified place.',
-                style: TextStyle(
+              Text(
+                l10n.t('patientLoginSubtitle'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   color: _onSurfaceVariant,
@@ -439,10 +494,11 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   }
 
   Widget _buildGoogleButton() {
+    final l10n = AppLocalizations.of(context);
     return GoogleSignInButton(
       onPressed: _handleGoogleSignIn,
       isLoading: _isSigningIn,
-      subtitle: 'Secure patient sign-in',
+      subtitle: l10n.t('securePatientSignIn'),
       accentColor: _secondary,
     );
   }
@@ -478,6 +534,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   }
 
   Widget _buildSecurityBadge() {
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -485,7 +542,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
         const SizedBox(width: 6),
         Flexible(
           child: Text(
-            'Secure sign-in • Your data stays private',
+            l10n.t('securityBadge'),
             maxLines: 2,
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -501,13 +558,14 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   }
 
   Widget _buildLegalFooter() {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 10,
       children: [
         _LegalLink(
-          label: 'Privacy Policy',
+          label: l10n.t('privacyPolicy'),
           onTap: () => _openLegal(LegalDocument.privacy),
         ),
         Container(
@@ -519,7 +577,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
           ),
         ),
         _LegalLink(
-          label: 'Terms of Use',
+          label: l10n.t('termsOfUse'),
           onTap: () => _openLegal(LegalDocument.terms),
         ),
       ],

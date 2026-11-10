@@ -236,12 +236,20 @@ class AppTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: colors.inverseSurface,
+        backgroundColor: colors.surfaceContainerLowest,
         contentTextStyle: AppTypography.bodyMd.copyWith(
-          color: colors.onInverseSurface,
+          color: colors.onSurface,
         ),
+        actionTextColor: colors.primary,
         behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(borderRadius: AppSpacing.roundedMd),
+        elevation: 0,
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: colors.outlineVariant.withValues(alpha: 0.55),
+          ),
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colors.surfaceContainerLowest,

@@ -4,12 +4,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/localization/app_localizations.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_typography.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../core/widgets/brand_mark.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/live_dot.dart';
 import '../../core/widgets/status_pill.dart';
 import '../authentication/google_auth_service.dart';
@@ -152,6 +155,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   void _processClinicSnapshot(List<ClinicModel> clinics) {
+    final l10n = AppLocalizations.of(context);
     final previous = _lastClinicState;
     final next = <String, ClinicModel>{
       for (final clinic in clinics) clinic.clinicId: clinic,
@@ -178,8 +182,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       if (old == null) {
         if (clinic.isActive) {
           _addNotification(
-            title: 'New clinic available',
-            message: '${clinic.name} is now listed on EasyCheck.',
+            title: l10n.t('newClinicAvailable'),
+            message: l10n.newClinicMessage(clinic.name),
             icon: Icons.local_hospital_rounded,
             clinicId: clinic.clinicId,
           );
@@ -189,24 +193,26 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
       if (!old.isActive && clinic.isActive) {
         _addNotification(
-          title: 'Clinic available again',
-          message: '${clinic.name} is accepting patients again.',
+          title: l10n.t('clinicAvailableAgain'),
+          message: l10n.clinicAvailableAgainMessage(clinic.name),
           icon: Icons.local_hospital_rounded,
           clinicId: clinic.clinicId,
         );
       } else if (old.isActive && !clinic.isActive) {
         _addNotification(
-          title: 'Clinic temporarily unavailable',
-          message: '${clinic.name} is offline for now.',
+          title: l10n.t('clinicTemporarilyUnavailable'),
+          message: l10n.clinicUnavailableMessage(clinic.name),
           icon: Icons.info_outline_rounded,
           clinicId: clinic.clinicId,
         );
       } else if (old.isOnline != clinic.isOnline) {
         _addNotification(
-          title: clinic.isOnline ? 'Clinic is live' : 'Clinic went offline',
+          title: clinic.isOnline
+              ? l10n.t('clinicIsLive')
+              : l10n.t('clinicWentOffline'),
           message: clinic.isOnline
-              ? '${clinic.name} is now accepting patients.'
-              : '${clinic.name} is not accepting patients right now.',
+              ? l10n.clinicLiveMessage(clinic.name)
+              : l10n.clinicOfflineMessage(clinic.name),
           icon: clinic.isOnline
               ? Icons.campaign_rounded
               : Icons.pause_circle_outline_rounded,
@@ -215,18 +221,18 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       } else if (old.doctorStatus != clinic.doctorStatus) {
         final (title, message, icon) = switch (clinic.doctorStatus) {
           'delayed' => (
-            'Doctor running late',
-            '${clinic.name} is reporting a delay.',
+            l10n.t('doctorRunningLate'),
+            l10n.doctorLateMessage(clinic.name),
             Icons.schedule_rounded,
           ),
           'offDuty' => (
-            'Doctor off duty',
-            '${clinic.name} is not seeing patients right now.',
+            l10n.t('doctorOffDuty'),
+            l10n.doctorOffDutyMessage(clinic.name),
             Icons.event_busy_rounded,
           ),
           _ => (
-            'Doctor available',
-            '${clinic.name} is ready to see patients.',
+            l10n.t('doctorAvailable'),
+            l10n.doctorAvailableMessage(clinic.name),
             Icons.check_circle_outline_rounded,
           ),
         };
@@ -243,6 +249,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   void _processCountSnapshot(Map<String, int> counts) {
+    final l10n = AppLocalizations.of(context);
     if (!_countBaselineReady) {
       _lastCounts = counts;
       _countBaselineReady = true;
@@ -265,8 +272,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       final clinic = _clinicById(entry.key);
       if (clinic == null || !clinic.isActive) continue;
       _addNotification(
-        title: 'Parchi #$current issued',
-        message: '${clinic.name} · today’s live count is now $current.',
+        title: l10n.parchiIssuedTitle(current),
+        message: l10n.parchiIssuedMessage(clinic.name, current),
         icon: Icons.confirmation_number_rounded,
         clinicId: entry.key,
       );
@@ -336,12 +343,13 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   String _relativeTime(DateTime time) {
+    final l10n = AppLocalizations.of(context);
     final difference = DateTime.now().difference(time);
-    if (difference.inSeconds < 45) return 'Just now';
-    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
-    if (difference.inHours < 24) return '${difference.inHours}h ago';
-    if (difference.inDays == 1) return 'Yesterday';
-    return '${difference.inDays}d ago';
+    if (difference.inSeconds < 45) return l10n.t('justNow');
+    if (difference.inMinutes < 60) return l10n.minutesAgo(difference.inMinutes);
+    if (difference.inHours < 24) return l10n.hoursAgo(difference.inHours);
+    if (difference.inDays == 1) return l10n.t('yesterdayLabel');
+    return l10n.daysAgo(difference.inDays);
   }
 
   List<ClinicModel> get _filtered {
@@ -390,17 +398,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete your account?'),
-        content: const Text(
-          'This permanently deletes your EasyCheck patient profile and the '
-          'Google sign-in link for this app. Live queue and clinic audit '
-          'records may be retained where the law or clinic safety requires '
-          'it. This action cannot be undone.',
-        ),
+        title: Text(AppLocalizations.of(context).t('deleteAccountQuestion')),
+        content: Text(AppLocalizations.of(context).t('deleteAccountBody')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).t('cancel')),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -408,7 +411,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete account'),
+            child: Text(AppLocalizations.of(context).t('deleteAccountConfirm')),
           ),
         ],
       ),
@@ -485,9 +488,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.showAuto(context, message);
   }
 
   @override
@@ -527,6 +528,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     _centered(_buildLocationRow()),
+                    const SizedBox(height: AppSpacing.spaceMd),
+                    _centered(_buildWelcomeCard()),
                     const SizedBox(height: AppSpacing.spaceMd),
                     _centered(_buildSearchBar()),
                     const SizedBox(height: AppSpacing.spaceLg),
@@ -581,7 +584,139 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
+  Widget _buildWelcomeCard() {
+    final l10n = AppLocalizations.of(context);
+    final user = _currentUser;
+    final rawName = user?.displayName?.trim() ?? '';
+    final firstName = rawName.isEmpty
+        ? ''
+        : rawName.split(RegExp(r'\s+')).first;
+    final greeting = l10n.greetingForHour(DateTime.now().hour);
+    final title = firstName.isEmpty ? greeting : '$greeting, $firstName';
+    final quote = l10n.quoteOfDay(DateTime.now().day);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF041A33),
+            Color(0xFF073B78),
+            Color(0xFF0A4A8A),
+          ],
+          stops: [0.0, 0.6, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: PatientColors.primary.withValues(alpha: 0.18),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -30,
+              right: -20,
+              child: IgnorePointer(
+                child: Icon(
+                  Icons.format_quote_rounded,
+                  size: 150,
+                  color: Colors.white.withValues(alpha: 0.07),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -36,
+              right: 34,
+              child: IgnorePointer(
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: PatientColors.secondaryContainer.withValues(
+                      alpha: 0.10,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: PatientColors.secondaryContainer.withValues(
+                        alpha: 0.16,
+                      ),
+                      borderRadius: AppSpacing.roundedFull,
+                      border: Border.all(
+                        color: PatientColors.secondaryContainer.withValues(
+                          alpha: 0.28,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.t('thoughtForToday').toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                        color: Color(0xFFB9F8D7),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    quote,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.94),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTopAppBar(double topInset) {
+    final l10n = AppLocalizations.of(context);
     return Positioned(
       top: 0,
       left: 0,
@@ -604,7 +739,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 children: [
                   const BrandMark(size: 36, padding: 4, radius: 10),
                   const SizedBox(width: AppSpacing.spaceSm),
-                  const Expanded(
+                  Expanded(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
@@ -613,7 +748,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'EASYCHECK',
                             maxLines: 1,
                             style: TextStyle(
@@ -625,9 +760,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                             ),
                           ),
                           Text(
-                            'Home',
+                            l10n.t('navHome'),
                             maxLines: 1,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -638,6 +773,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 2),
+                  const LanguageToggle(compact: true),
+                  const SizedBox(width: 2),
                   _buildNotificationButton(),
                   const SizedBox(width: AppSpacing.spaceXs),
                   _buildAvatarButton(),
@@ -651,14 +789,15 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildNotificationButton() {
+    final l10n = AppLocalizations.of(context);
     final unread = _unreadNotificationCount;
     return Stack(
       clipBehavior: Clip.none,
       children: [
         IconButton(
           tooltip: unread == 0
-              ? 'Notifications'
-              : '$unread unread notification${unread == 1 ? '' : 's'}',
+              ? l10n.t('notifications')
+              : l10n.unreadNotifications(unread),
           onPressed: _showNotificationsSheet,
           icon: const Icon(
             Icons.notifications_outlined,
@@ -703,7 +842,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     final photoUrl = user?.photoURL;
     return Semantics(
       button: true,
-      label: 'Open profile settings',
+      label: AppLocalizations.of(context).t('openProfileSettings'),
       child: InkWell(
         borderRadius: AppSpacing.roundedFull,
         onTap: () => setState(() => _navIndex = 2),
@@ -729,6 +868,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildLocationRow() {
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       width: double.infinity,
       child: Wrap(
@@ -781,21 +921,21 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               borderRadius: AppSpacing.roundedFull,
               boxShadow: AppSpacing.elevationLevel1,
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                LiveDot(
+                const LiveDot(
                   size: 6,
                   color: PatientColors.secondary,
                   semanticsLabel: 'Live queue',
                 ),
-                SizedBox(width: 2),
+                const SizedBox(width: 2),
                 Flexible(
                   child: Text(
-                    'Live Queue',
+                    l10n.t('liveQueue'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -812,12 +952,13 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildSearchBar() {
+    final l10n = AppLocalizations.of(context);
     return TextField(
       controller: _searchController,
       textInputAction: TextInputAction.search,
       style: AppTypography.bodyMd.copyWith(color: PatientColors.onSurface),
       decoration: InputDecoration(
-        hintText: 'Search hospital or doctor',
+        hintText: l10n.t('searchPlaceholder'),
         prefixIcon: const Icon(
           Icons.search_rounded,
           size: 21,
@@ -826,7 +967,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         suffixIcon: _searchQuery.isEmpty
             ? null
             : IconButton(
-                tooltip: 'Clear search',
+                tooltip: l10n.t('clearSearch'),
                 icon: const Icon(Icons.close_rounded, size: 19),
                 onPressed: () => _searchController.clear(),
               ),
@@ -852,6 +993,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildSectionTitle() {
+    final l10n = AppLocalizations.of(context);
     final showLiveSync = MediaQuery.sizeOf(context).width >= 390;
     return Row(
       children: [
@@ -861,7 +1003,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             children: [
               Flexible(
                 child: Text(
-                  'Registered Clinics',
+                  l10n.t('registeredClinics'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.headlineSm.copyWith(
@@ -877,7 +1019,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                   borderRadius: AppSpacing.roundedFull,
                 ),
                 child: Text(
-                  '${_filtered.length} Active',
+                  l10n.activeCount(_filtered.length),
                   maxLines: 1,
                   style: AppTypography.labelSm.copyWith(
                     color: PatientColors.onSurfaceVariant,
@@ -891,7 +1033,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         if (showLiveSync) ...[
           const SizedBox(width: AppSpacing.spaceSm),
           Text(
-            'Live Sync',
+            l10n.t('liveSync'),
             maxLines: 1,
             style: AppTypography.labelSm.copyWith(
               color: PatientColors.outline,
@@ -911,6 +1053,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildErrorState() {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
@@ -921,10 +1064,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             size: 44,
           ),
           const SizedBox(height: AppSpacing.spaceMd),
-          Text('Could not load clinics', style: AppTypography.titleMd),
+          Text(l10n.t('couldNotLoadClinics'), style: AppTypography.titleMd),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
-            _error ?? 'Check your connection and try again.',
+            _error ?? l10n.t('checkConnection'),
             textAlign: TextAlign.center,
             style: AppTypography.bodySm.copyWith(
               color: PatientColors.onSurfaceVariant,
@@ -934,7 +1077,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           FilledButton.icon(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: const Text('Retry'),
+            label: Text(l10n.t('retry')),
           ),
         ],
       ),
@@ -942,6 +1085,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context);
     final hasSearch = _searchQuery.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
@@ -956,13 +1100,17 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           const SizedBox(height: AppSpacing.spaceMd),
           Text(
-            hasSearch ? 'No clinics match your search' : 'No clinics available',
+            hasSearch
+                ? l10n.t('noClinicsMatch')
+                : l10n.t('noClinicsAvailable'),
             textAlign: TextAlign.center,
             style: AppTypography.titleMd,
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
-            hasSearch ? 'Try a different hospital, doctor, or area.' : 'Pull down to refresh. New clinics appear here automatically.',
+            hasSearch
+                ? l10n.t('tryDifferentSearch')
+                : l10n.t('pullToRefresh'),
             textAlign: TextAlign.center,
             style: AppTypography.bodySm.copyWith(
               color: PatientColors.onSurfaceVariant,
@@ -978,10 +1126,11 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildMyClinicsTab() {
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: Column(
         children: [
-          _buildSimpleHeader('My Clinics', Icons.local_hospital_rounded),
+          _buildSimpleHeader(l10n.t('navMyClinics'), Icons.local_hospital_rounded),
           Expanded(
             child: Center(
               child: ConstrainedBox(
@@ -1006,13 +1155,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       ),
                       const SizedBox(height: AppSpacing.spaceLg),
                       Text(
-                        'No saved clinics yet',
+                        l10n.t('noSavedClinics'),
                         style: AppTypography.headlineSm,
                       ),
                       const SizedBox(height: AppSpacing.spaceSm),
                       Text(
-                        'Open a clinic and tap the bookmark to keep it here for '
-                        'one-tap access to its live queue.',
+                        l10n.t('noSavedClinicsBody'),
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyMd.copyWith(
                           color: PatientColors.onSurfaceVariant,
@@ -1022,7 +1170,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       FilledButton.icon(
                         onPressed: _browseClinics,
                         icon: const Icon(Icons.search_rounded, size: 18),
-                        label: const Text('Browse clinics'),
+                        label: Text(l10n.t('browseClinics')),
                       ),
                     ],
                   ),
@@ -1040,11 +1188,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildSettingsTab() {
+    final l10n = AppLocalizations.of(context);
     final user = _currentUser;
     return SafeArea(
       child: Column(
         children: [
-          _buildSimpleHeader('Settings', Icons.settings_rounded),
+          _buildSimpleHeader(l10n.t('navSettings'), Icons.settings_rounded),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.gutter),
@@ -1076,14 +1225,14 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                                       user?.displayName?.trim().isNotEmpty ==
                                               true
                                           ? user!.displayName!
-                                          : 'Patient account',
+                                          : l10n.t('patientAccount'),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTypography.titleMd,
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      user?.email ?? 'Not signed in',
+                                      user?.email ?? l10n.t('notSignedIn'),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySm.copyWith(
@@ -1097,28 +1246,75 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                           ),
                         ),
                         const SizedBox(height: AppSpacing.spaceLg),
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                          decoration: BoxDecoration(
+                            color: PatientColors.surfaceContainerLowest,
+                            borderRadius: AppSpacing.roundedMd,
+                            boxShadow: AppSpacing.elevationLevel1,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: PatientColors.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.translate_rounded,
+                                  color: PatientColors.primary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.spaceMd),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.t('languageSection'),
+                                      style: AppTypography.bodyMd.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      l10n.t('languageDescription'),
+                                      style: AppTypography.labelSm,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const LanguageToggle(compact: true),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.spaceSm),
                         _buildSettingsTile(
                           icon: Icons.shield_outlined,
-                          title: 'Privacy Policy',
+                          title: l10n.t('privacyPolicy'),
                           onTap: () => _openLegal(LegalDocument.privacy),
                         ),
                         _buildSettingsTile(
                           icon: Icons.description_outlined,
-                          title: 'Terms of Use',
+                          title: l10n.t('termsOfUse'),
                           onTap: () => _openLegal(LegalDocument.terms),
                         ),
                         _buildSettingsTile(
                           icon: Icons.info_outline_rounded,
-                          title: 'About EasyCheck',
-                          subtitle: 'Features, safety and version',
+                          title: l10n.t('aboutEasyCheck'),
+                          subtitle: l10n.t('aboutEasyCheckSubtitle'),
                           onTap: _openAbout,
                         ),
                         _buildSettingsTile(
                           icon: Icons.delete_forever_outlined,
                           title: _isDeletingAccount
-                              ? 'Deleting account…'
-                              : 'Delete account',
-                          subtitle: 'Permanently remove your patient profile',
+                              ? l10n.t('deletingAccount')
+                              : l10n.t('deleteAccount'),
+                          subtitle: l10n.t('deleteAccountSubtitle'),
                           iconColor: PatientColors.error,
                           trailing: _isDeletingAccount
                               ? const SizedBox(
@@ -1140,7 +1336,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                           OutlinedButton.icon(
                             onPressed: _signOut,
                             icon: const Icon(Icons.logout_rounded, size: 18),
-                            label: const Text('Sign out'),
+                            label: Text(l10n.t('signOut')),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: PatientColors.error,
                               side: BorderSide(
@@ -1231,11 +1427,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildBottomNav() {
+    final l10n = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    const items = [
-      (Icons.home_rounded, 'Home'),
-      (Icons.local_hospital_rounded, 'My Clinics'),
-      (Icons.settings_rounded, 'Settings'),
+    final items = [
+      (Icons.home_rounded, l10n.t('navHome')),
+      (Icons.local_hospital_rounded, l10n.t('navMyClinics')),
+      (Icons.settings_rounded, l10n.t('navSettings')),
     ];
 
     return Container(
@@ -1319,6 +1516,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   // ───────────────────────────────────────────────────────────────────────────
 
   void _showNotificationsSheet() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -1348,7 +1546,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Notifications',
+                              l10n.t('notifications'),
                               style: AppTypography.headlineSm.copyWith(
                                 color: PatientColors.primary,
                               ),
@@ -1365,7 +1563,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                                 borderRadius: AppSpacing.roundedFull,
                               ),
                               child: Text(
-                                '$_unreadNotificationCount new',
+                                l10n.unreadNotifications(
+                                  _unreadNotificationCount,
+                                ),
                                 style: AppTypography.labelSm.copyWith(
                                   color: PatientColors.onSecondaryContainer,
                                   fontWeight: FontWeight.w700,
@@ -1415,6 +1615,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildNotificationsEmptyState(BuildContext sheetContext) {
+    final l10n = AppLocalizations.of(sheetContext);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.spaceXl,
@@ -1439,11 +1640,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.spaceMd),
-          Text('You’re all caught up', style: AppTypography.titleMd),
+          Text(l10n.t('allCaughtUp'), style: AppTypography.titleMd),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
-            'Live parchi counts and clinic availability updates will appear '
-            'here as they happen.',
+            l10n.t('notificationsEmptyBody'),
             textAlign: TextAlign.center,
             style: AppTypography.bodySm.copyWith(
               color: PatientColors.onSurfaceVariant,
@@ -1454,7 +1654,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             width: double.infinity,
             child: FilledButton(
               onPressed: () => Navigator.of(sheetContext).pop(),
-              child: const Text('Close'),
+              child: Text(l10n.t('close')),
             ),
           ),
         ],
@@ -1627,13 +1827,13 @@ class _ClinicCard extends StatelessWidget {
     };
   }
 
-  String get _statusLabel {
-    if (!clinic.isActive) return 'Offline';
-    if (!clinic.isOnline) return 'Offline';
+  String _statusLabel(AppLocalizations l10n) {
+    if (!clinic.isActive) return l10n.t('offline');
+    if (!clinic.isOnline) return l10n.t('offline');
     return switch (_status) {
-      ClinicOperationalStatus.available => 'Available',
-      ClinicOperationalStatus.delayed => 'Delayed',
-      ClinicOperationalStatus.unavailable => 'Unavailable',
+      ClinicOperationalStatus.available => l10n.t('statusAvailable'),
+      ClinicOperationalStatus.delayed => l10n.t('statusDelayed'),
+      ClinicOperationalStatus.unavailable => l10n.t('statusUnavailable'),
     };
   }
 
@@ -1657,6 +1857,7 @@ class _ClinicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.spaceMd),
       child: Material(
@@ -1764,8 +1965,8 @@ class _ClinicCard extends StatelessWidget {
                       runSpacing: AppSpacing.spaceSm,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        StatusPill(status: _status, label: _statusLabel),
-                        _buildParchiPill(),
+                        StatusPill(status: _status, label: _statusLabel(l10n)),
+                        _buildParchiPill(l10n),
                       ],
                     ),
                   ],
@@ -1834,7 +2035,7 @@ class _ClinicCard extends StatelessWidget {
     );
   }
 
-  Widget _buildParchiPill() {
+  Widget _buildParchiPill(AppLocalizations l10n) {
     if (!clinic.isActive) {
       return Container(
         constraints: const BoxConstraints(maxWidth: 240),
@@ -1854,7 +2055,7 @@ class _ClinicCard extends StatelessWidget {
             const SizedBox(width: 5),
             Flexible(
               child: Text(
-                'Subscription inactive',
+                l10n.t('subscriptionInactive'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.labelSm.copyWith(
@@ -1887,7 +2088,7 @@ class _ClinicCard extends StatelessWidget {
             const SizedBox(width: 5),
             Flexible(
               child: Text(
-                'Closed for session',
+                l10n.t('closedForSession'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.labelSm.copyWith(
@@ -1918,7 +2119,10 @@ class _ClinicCard extends StatelessWidget {
           const SizedBox(width: 5),
           Flexible(
             child: Text(
-              "Today's Parchi: $parchiCount",
+              l10n.t('todaysParchiCountLabel').replaceAll(
+                '{count}',
+                '$parchiCount',
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.labelSm.copyWith(
