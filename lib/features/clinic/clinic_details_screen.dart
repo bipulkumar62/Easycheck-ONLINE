@@ -537,6 +537,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   }
 
   Widget _buildClinicLocationSection(ClinicModel clinic) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.only(top: 12.0),
       decoration: const BoxDecoration(
