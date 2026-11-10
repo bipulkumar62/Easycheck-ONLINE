@@ -205,6 +205,58 @@ class QueueRepository {
     });
   }
 
+  /// Updates the clinic-level yesterday parchi count and records the change in
+  /// the immutable queue history as a correction. Today's live counter is not
+  /// touched.
+  Future<int> updateYesterdayParchiCount(
+    String clinicId,
+    int value,
+    String performedBy,
+  ) async {
+    final fs = _fs;
+    if (fs == null) throw const ServerFailure('Firebase is not available');
+    if (value < 0) {
+      throw const ServerFailure('Yesterday’s count cannot be negative');
+    }
+
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    final sessionDate =
+        '${yesterday.year}-'
+        '${yesterday.month.toString().padLeft(2, '0')}-'
+        '${yesterday.day.toString().padLeft(2, '0')}';
+
+    return await fs.runTransaction<int>((transaction) async {
+      final clinicRef = fs.collection('clinics').doc(clinicId);
+      final clinicDoc = await transaction.get(clinicRef);
+      if (!clinicDoc.exists) {
+        throw const ServerFailure('Clinic not found');
+      }
+
+      final previous =
+          (clinicDoc.data()?['yesterdayParchiCount'] as num?)?.toInt() ?? 0;
+      transaction.update(clinicRef, {
+        'yesterdayParchiCount': value,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      final history = _historyCollection();
+      if (history != null) {
+        transaction.set(history.doc(), {
+          'clinicId': clinicId,
+          'sessionDate': sessionDate,
+          'previousNumber': previous,
+          'newNumber': value,
+          'action': 'correction',
+          'performedBy': performedBy,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      return value;
+    });
+  }
+
   Future<List<QueueHistoryEntry>> getHistory(
       String clinicId, String date) async {
     try {

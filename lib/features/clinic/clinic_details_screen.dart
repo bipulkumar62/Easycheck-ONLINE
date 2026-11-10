@@ -392,7 +392,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
             ),
             child: const Icon(
               Icons.verified_rounded,
-              color: Color(0xFF007147),
+              color: PatientColors.onSecondaryContainer,
               size: 16.0,
             ),
           ),
@@ -866,7 +866,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       ),
                       const SizedBox(height: 2.0),
                       Text(
-                        'Previous day’s verified count',
+                        'Previous day’s parchi count',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: PatientTypography.labelSm.copyWith(
@@ -933,7 +933,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       ),
                       const SizedBox(height: 2.0),
                       Text(
-                        'Current day’s verified count',
+                        'Current day’s live count',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: PatientTypography.labelSm.copyWith(
@@ -942,28 +942,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppSpacing.spaceMd),
-
-          // Backend Direct Sync Footer Note
-          Row(
-            children: [
-              const Icon(
-                Icons.cloud_done_rounded,
-                color: PatientColors.primary,
-                size: 16.0,
-              ),
-              const SizedBox(width: 8.0),
-              Expanded(
-                child: Text(
-                  'Count synced directly with reception desk backend',
-                  style: PatientTypography.bodySm.copyWith(
-                    color: PatientColors.onSurfaceVariant,
                   ),
                 ),
               ),

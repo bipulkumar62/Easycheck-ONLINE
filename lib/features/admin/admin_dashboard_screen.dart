@@ -328,6 +328,99 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  Future<void> _editYesterdayCount(ClinicModel clinic) async {
+    if (_busy) return;
+    final controller = TextEditingController(
+      text: '${clinic.yesterdayParchiCount}',
+    );
+    final value = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) {
+        String? error;
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            void submit() {
+              final parsed = int.tryParse(controller.text.trim());
+              if (parsed == null || parsed < 0 || parsed > 99999) {
+                setDialogState(() {
+                  error = 'Enter a whole number between 0 and 99,999.';
+                });
+                return;
+              }
+              Navigator.of(dialogContext).pop(parsed);
+            }
+
+            return AlertDialog(
+              title: const Text('Edit yesterday’s count'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Update the parchi count patients see for yesterday. '
+                    'Today’s live counter is not changed. This correction is '
+                    'saved to the audit history.',
+                    style: AppTypography.bodySm.copyWith(
+                      color: AdminColors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.spaceMd),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onSubmitted: (_) => submit(),
+                    decoration: InputDecoration(
+                      labelText: 'Yesterday’s parchi count',
+                      errorText: error,
+                      prefixIcon: const Icon(Icons.history_rounded),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(onPressed: submit, child: const Text('Save')),
+              ],
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
+
+    if (value == null || !mounted) return;
+    if (value == clinic.yesterdayParchiCount) {
+      _showMessage('Yesterday’s count is already $value.');
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      final updated = await _queueRepository.updateYesterdayParchiCount(
+        clinic.clinicId,
+        value,
+        _user?.uid ?? 'system',
+      );
+      if (!mounted) return;
+      setState(() {
+        _clinic = _clinic?.copyWith(yesterdayParchiCount: updated);
+      });
+      _showMessage('Yesterday’s parchi count updated to $updated.');
+    } catch (_) {
+      _showMessage(
+        'Could not update yesterday’s count. Check your connection and try '
+        'again.',
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _setDoctorStatus(String status) async {
     final clinic = _clinic;
     if (clinic == null || _busy) return;
@@ -1662,6 +1755,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.spaceSm),
+          Container(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.spaceMd,
+              10,
+              AppSpacing.spaceSm,
+              10,
+            ),
+            decoration: BoxDecoration(
+              color: AdminColors.surfaceContainerLow,
+              borderRadius: AppSpacing.roundedMd,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AdminColors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(
+                    Icons.history_rounded,
+                    size: 18,
+                    color: AdminColors.primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.spaceSm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'YESTERDAY’S PARCHI',
+                        style: AppTypography.labelSm.copyWith(
+                          color: AdminColors.onSurfaceVariant,
+                          fontSize: 9.5,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        '${clinic.yesterdayParchiCount} parchi · '
+                        '${DateFormat('MMM d').format(_now.subtract(const Duration(days: 1)))}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodyMd.copyWith(
+                          color: AdminColors.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _busy ? null : () => _editYesterdayCount(clinic),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Edit'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AdminColors.primary,
+                    textStyle: AppTypography.labelMd.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

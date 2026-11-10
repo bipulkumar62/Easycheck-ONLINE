@@ -36,6 +36,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   static const double _contentMaxWidth = 720.0;
 
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _homeScrollController = ScrollController();
+  final GlobalKey _clinicListKey = GlobalKey();
+  final ValueNotifier<int> _notificationRevision = ValueNotifier<int>(0);
+  final List<_PatientNotification> _notifications = <_PatientNotification>[];
   final ClinicRepository _clinicRepository = ClinicRepository();
   final QueueRepository _queueRepository = QueueRepository();
   final UserProfileRepository _profileRepository = UserProfileRepository();
@@ -46,9 +50,16 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   List<ClinicModel> _clinics = const [];
   Map<String, int> _liveCounts = const {};
+  Map<String, ClinicModel> _lastClinicState = const {};
+  Map<String, int> _lastCounts = const {};
   String _searchQuery = '';
   bool _isLoading = true;
   bool _isDeletingAccount = false;
+  bool _notificationBaselineReady = false;
+  bool _countBaselineReady = false;
+  bool _clinicBaselineEstablished = false;
+  bool _countBaselineEstablished = false;
+  int _unreadNotificationCount = 0;
   String? _error;
   int _navIndex = 0;
 
@@ -81,6 +92,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _homeScrollController.dispose();
+    _notificationRevision.dispose();
     _clinicsSubscription?.cancel();
     _sessionsSubscription?.cancel();
     super.dispose();
@@ -99,6 +112,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     _clinicsSubscription = _clinicRepository.clinicsStream().listen(
       (clinics) {
         if (!mounted) return;
+        _processClinicSnapshot(clinics);
         setState(() {
           _clinics = clinics;
           _isLoading = false;
@@ -122,17 +136,212 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         .listen(
           (sessions) {
             if (!mounted) return;
+            final counts = {
+              for (final session in sessions)
+                session.clinicId: session.currentParchaNumber,
+            };
+            _processCountSnapshot(counts);
             setState(() {
-              _liveCounts = {
-                for (final session in sessions)
-                  session.clinicId: session.currentParchaNumber,
-              };
+              _liveCounts = counts;
             });
           },
           onError: (_) {
             // A failed counter feed must never block clinic discovery.
           },
         );
+  }
+
+  void _processClinicSnapshot(List<ClinicModel> clinics) {
+    final previous = _lastClinicState;
+    final next = <String, ClinicModel>{
+      for (final clinic in clinics) clinic.clinicId: clinic,
+    };
+
+    if (!_notificationBaselineReady) {
+      _lastClinicState = next;
+      _notificationBaselineReady = true;
+      _clinicBaselineEstablished = next.isNotEmpty;
+      return;
+    }
+
+    // The first Firestore emission can be an empty cache snapshot before the
+    // server data arrives. Treat the first real list as the baseline instead
+    // of flooding the bell with every existing clinic.
+    if (!_clinicBaselineEstablished) {
+      _lastClinicState = next;
+      _clinicBaselineEstablished = next.isNotEmpty;
+      return;
+    }
+
+    for (final clinic in clinics) {
+      final old = previous[clinic.clinicId];
+      if (old == null) {
+        if (clinic.isActive) {
+          _addNotification(
+            title: 'New clinic available',
+            message: '${clinic.name} is now listed on EasyCheck.',
+            icon: Icons.local_hospital_rounded,
+            clinicId: clinic.clinicId,
+          );
+        }
+        continue;
+      }
+
+      if (!old.isActive && clinic.isActive) {
+        _addNotification(
+          title: 'Clinic available again',
+          message: '${clinic.name} is accepting patients again.',
+          icon: Icons.local_hospital_rounded,
+          clinicId: clinic.clinicId,
+        );
+      } else if (old.isActive && !clinic.isActive) {
+        _addNotification(
+          title: 'Clinic temporarily unavailable',
+          message: '${clinic.name} is offline for now.',
+          icon: Icons.info_outline_rounded,
+          clinicId: clinic.clinicId,
+        );
+      } else if (old.isOnline != clinic.isOnline) {
+        _addNotification(
+          title: clinic.isOnline ? 'Clinic is live' : 'Clinic went offline',
+          message: clinic.isOnline
+              ? '${clinic.name} is now accepting patients.'
+              : '${clinic.name} is not accepting patients right now.',
+          icon: clinic.isOnline
+              ? Icons.campaign_rounded
+              : Icons.pause_circle_outline_rounded,
+          clinicId: clinic.clinicId,
+        );
+      } else if (old.doctorStatus != clinic.doctorStatus) {
+        final (title, message, icon) = switch (clinic.doctorStatus) {
+          'delayed' => (
+            'Doctor running late',
+            '${clinic.name} is reporting a delay.',
+            Icons.schedule_rounded,
+          ),
+          'offDuty' => (
+            'Doctor off duty',
+            '${clinic.name} is not seeing patients right now.',
+            Icons.event_busy_rounded,
+          ),
+          _ => (
+            'Doctor available',
+            '${clinic.name} is ready to see patients.',
+            Icons.check_circle_outline_rounded,
+          ),
+        };
+        _addNotification(
+          title: title,
+          message: message,
+          icon: icon,
+          clinicId: clinic.clinicId,
+        );
+      }
+    }
+
+    _lastClinicState = next;
+  }
+
+  void _processCountSnapshot(Map<String, int> counts) {
+    if (!_countBaselineReady) {
+      _lastCounts = counts;
+      _countBaselineReady = true;
+      _countBaselineEstablished = counts.isNotEmpty;
+      return;
+    }
+
+    // Same cache-vs-server rule as clinics: the first non-empty counter feed
+    // becomes the baseline so existing parchi numbers do not all alert at once.
+    if (!_countBaselineEstablished) {
+      _lastCounts = counts;
+      _countBaselineEstablished = counts.isNotEmpty;
+      return;
+    }
+
+    for (final entry in counts.entries) {
+      final previous = _lastCounts[entry.key];
+      final current = entry.value;
+      if (current <= (previous ?? 0)) continue;
+      final clinic = _clinicById(entry.key);
+      if (clinic == null || !clinic.isActive) continue;
+      _addNotification(
+        title: 'Parchi #$current issued',
+        message: '${clinic.name} · today’s live count is now $current.',
+        icon: Icons.confirmation_number_rounded,
+        clinicId: entry.key,
+      );
+    }
+
+    _lastCounts = counts;
+  }
+
+  void _addNotification({
+    required String title,
+    required String message,
+    required IconData icon,
+    String? clinicId,
+  }) {
+    final now = DateTime.now();
+    _notifications.insert(
+      0,
+      _PatientNotification(
+        title: title,
+        message: message,
+        icon: icon,
+        clinicId: clinicId,
+        createdAt: now,
+      ),
+    );
+    if (_notifications.length > 30) {
+      _notifications.removeRange(30, _notifications.length);
+    }
+    _unreadNotificationCount = _notifications
+        .where((notification) => !notification.isRead)
+        .length;
+    _notificationRevision.value++;
+  }
+
+  ClinicModel? _clinicById(String clinicId) {
+    for (final clinic in _clinics) {
+      if (clinic.clinicId == clinicId) return clinic;
+    }
+    return null;
+  }
+
+  void _browseClinics() {
+    _searchController.clear();
+    setState(() => _navIndex = 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _clinicListKey.currentContext;
+      if (target != null) {
+        Scrollable.ensureVisible(
+          target,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          alignment: 0.05,
+        );
+        return;
+      }
+      // The section title can be unbuilt if Home was scrolled far down, so
+      // fall back to the top where the search and clinic list begin.
+      if (_homeScrollController.hasClients) {
+        _homeScrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  String _relativeTime(DateTime time) {
+    final difference = DateTime.now().difference(time);
+    if (difference.inSeconds < 45) return 'Just now';
+    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
+    if (difference.inHours < 24) return '${difference.inHours}h ago';
+    if (difference.inDays == 1) return 'Yesterday';
+    return '${difference.inDays}d ago';
   }
 
   List<ClinicModel> get _filtered {
@@ -307,6 +516,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           onRefresh: _loadData,
           color: PatientColors.primary,
           child: CustomScrollView(
+            controller: _homeScrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(child: SizedBox(height: topInset + 64.0)),
@@ -320,7 +530,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                     const SizedBox(height: AppSpacing.spaceMd),
                     _centered(_buildSearchBar()),
                     const SizedBox(height: AppSpacing.spaceLg),
-                    _centered(_buildSectionTitle()),
+                    KeyedSubtree(
+                      key: _clinicListKey,
+                      child: _centered(_buildSectionTitle()),
+                    ),
                     const SizedBox(height: AppSpacing.spaceMd),
                     if (_isLoading)
                       _centered(_buildLoadingState())
@@ -425,15 +638,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Notifications',
-                    onPressed: _showNotificationsSheet,
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      size: 22,
-                      color: PatientColors.onSurface,
-                    ),
-                  ),
+                  _buildNotificationButton(),
                   const SizedBox(width: AppSpacing.spaceXs),
                   _buildAvatarButton(),
                 ],
@@ -442,6 +647,54 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNotificationButton() {
+    final unread = _unreadNotificationCount;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          tooltip: unread == 0
+              ? 'Notifications'
+              : '$unread unread notification${unread == 1 ? '' : 's'}',
+          onPressed: _showNotificationsSheet,
+          icon: const Icon(
+            Icons.notifications_outlined,
+            size: 22,
+            color: PatientColors.onSurface,
+          ),
+        ),
+        if (unread > 0)
+          Positioned(
+            top: 3,
+            right: 3,
+            child: IgnorePointer(
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: PatientColors.error,
+                  borderRadius: AppSpacing.roundedFull,
+                  border: Border.all(color: PatientColors.surface, width: 1.5),
+                ),
+                child: Center(
+                  child: Text(
+                    unread > 9 ? '9+' : '$unread',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 9,
+                      height: 1.0,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -767,7 +1020,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       ),
                       const SizedBox(height: AppSpacing.spaceXl),
                       FilledButton.icon(
-                        onPressed: () => setState(() => _navIndex = 0),
+                        onPressed: _browseClinics,
                         icon: const Icon(Icons.search_rounded, size: 18),
                         label: const Text('Browse clinics'),
                       ),
@@ -1031,7 +1284,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                         items[index].$1,
                         size: 23,
                         color: selected
-                            ? PatientColors.secondary
+                            ? PatientColors.onSecondaryContainer
                             : PatientColors.onSurfaceVariant,
                       ),
                     ),
@@ -1047,7 +1300,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                             ? FontWeight.w600
                             : FontWeight.w400,
                         color: selected
-                            ? PatientColors.secondary
+                            ? PatientColors.onSecondaryContainer
                             : PatientColors.onSurfaceVariant,
                       ),
                     ),
@@ -1069,40 +1322,249 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.spaceXl,
-            0,
-            AppSpacing.spaceXl,
-            AppSpacing.spaceXl,
+      isScrollControlled: true,
+      backgroundColor: PatientColors.surface,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.78,
+            ),
+            child: ValueListenableBuilder<int>(
+              valueListenable: _notificationRevision,
+              builder: (context, _, _) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.spaceXl,
+                        0,
+                        AppSpacing.spaceXl,
+                        AppSpacing.spaceSm,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Notifications',
+                              style: AppTypography.headlineSm.copyWith(
+                                color: PatientColors.primary,
+                              ),
+                            ),
+                          ),
+                          if (_unreadNotificationCount > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: PatientColors.secondaryContainer,
+                                borderRadius: AppSpacing.roundedFull,
+                              ),
+                              child: Text(
+                                '$_unreadNotificationCount new',
+                                style: AppTypography.labelSm.copyWith(
+                                  color: PatientColors.onSecondaryContainer,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (_notifications.isEmpty)
+                      _buildNotificationsEmptyState(sheetContext)
+                    else
+                      Flexible(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.spaceMd,
+                            0,
+                            AppSpacing.spaceMd,
+                            AppSpacing.spaceLg,
+                          ),
+                          itemCount: _notifications.length,
+                          separatorBuilder: (_, _) => const Divider(height: 1),
+                          itemBuilder: (context, index) =>
+                              _buildNotificationTile(
+                                sheetContext,
+                                _notifications[index],
+                              ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        );
+      },
+    ).whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        for (final notification in _notifications) {
+          notification.isRead = true;
+        }
+        _unreadNotificationCount = 0;
+      });
+      _notificationRevision.value++;
+    });
+  }
+
+  Widget _buildNotificationsEmptyState(BuildContext sheetContext) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.spaceXl,
+        AppSpacing.spaceMd,
+        AppSpacing.spaceXl,
+        AppSpacing.spaceXl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: PatientColors.surfaceContainerLow,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              size: 32,
+              color: PatientColors.primary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.spaceMd),
+          Text('You’re all caught up', style: AppTypography.titleMd),
+          const SizedBox(height: AppSpacing.spaceXs),
+          Text(
+            'Live parchi counts and clinic availability updates will appear '
+            'here as they happen.',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySm.copyWith(
+              color: PatientColors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.spaceLg),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.of(sheetContext).pop(),
+              child: const Text('Close'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationTile(
+    BuildContext sheetContext,
+    _PatientNotification notification,
+  ) {
+    final clinic = notification.clinicId == null
+        ? null
+        : _clinicById(notification.clinicId!);
+    final unread = !notification.isRead;
+    return Material(
+      color: unread
+          ? PatientColors.secondaryContainer.withValues(alpha: 0.22)
+          : Colors.transparent,
+      child: InkWell(
+        onTap: clinic == null
+            ? null
+            : () {
+                Navigator.of(sheetContext).pop();
+                _openClinic(clinic);
+              },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.spaceSm,
+            vertical: AppSpacing.spaceMd,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.notifications_none_rounded,
-                size: 40,
-                color: PatientColors.primary,
-              ),
-              const SizedBox(height: AppSpacing.spaceMd),
-              Text('No new notifications', style: AppTypography.titleMd),
-              const SizedBox(height: AppSpacing.spaceXs),
-              Text(
-                'Queue updates for your clinics will appear here.',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySm.copyWith(
-                  color: PatientColors.onSurfaceVariant,
+              Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: PatientColors.surfaceContainerLow,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  notification.icon,
+                  size: 19,
+                  color: PatientColors.primary,
                 ),
               ),
-              const SizedBox(height: AppSpacing.spaceLg),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
+              const SizedBox(width: AppSpacing.spaceSm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodyMd.copyWith(
+                              fontWeight: unread
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: PatientColors.onSurface,
+                            ),
+                          ),
+                        ),
+                        if (unread) ...[
+                          const SizedBox(width: AppSpacing.spaceXs),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: PatientColors.secondary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      notification.message,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodySm.copyWith(
+                        color: PatientColors.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _relativeTime(notification.createdAt),
+                      style: AppTypography.labelSm.copyWith(
+                        color: PatientColors.outline,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              if (clinic != null)
+                const Padding(
+                  padding: EdgeInsets.only(left: AppSpacing.spaceXs, top: 8),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: PatientColors.outline,
+                  ),
+                ),
             ],
           ),
         ),
@@ -1120,6 +1582,23 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       MaterialPageRoute<void>(builder: (_) => LegalScreen(document: document)),
     );
   }
+}
+
+class _PatientNotification {
+  _PatientNotification({
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.createdAt,
+    this.clinicId,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+  final DateTime createdAt;
+  final String? clinicId;
+  bool isRead = false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

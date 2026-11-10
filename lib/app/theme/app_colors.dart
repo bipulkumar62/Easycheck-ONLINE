@@ -19,7 +19,10 @@ class PatientColors {
   static const Color secondary = Color(0xFF006D44);
   static const Color secondaryContainer = Color(0xFF7DF7B6);
   static const Color onSecondary = Color(0xFFFFFFFF);
-  static const Color onSecondaryContainer = Color(0xFF007147);
+
+  /// Black content on the light emerald container keeps the green status boxes
+  /// readable instead of using green text on a green background.
+  static const Color onSecondaryContainer = Color(0xFF000000);
   static const Color secondaryFixed = Color(0xFF80FAB9);
   static const Color secondaryFixedDim = Color(0xFF62DD9E);
   static const Color onSecondaryFixed = Color(0xFF002111);
