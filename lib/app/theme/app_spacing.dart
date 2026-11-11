@@ -16,13 +16,21 @@ class AppSpacing {
   static const double marginLg = 24.0;
 
   static const BorderRadius roundedSm = BorderRadius.all(Radius.circular(4.0));
-  static const BorderRadius roundedDefault = BorderRadius.all(Radius.circular(8.0));
+  static const BorderRadius roundedDefault = BorderRadius.all(
+    Radius.circular(8.0),
+  );
   static const BorderRadius roundedMd = BorderRadius.all(Radius.circular(12.0));
   static const BorderRadius roundedLg = BorderRadius.all(Radius.circular(16.0));
   static const BorderRadius roundedXl = BorderRadius.all(Radius.circular(20.0));
-  static const BorderRadius rounded2xl = BorderRadius.all(Radius.circular(24.0));
-  static const BorderRadius rounded3xl = BorderRadius.all(Radius.circular(32.0));
-  static const BorderRadius roundedFull = BorderRadius.all(Radius.circular(999.0));
+  static const BorderRadius rounded2xl = BorderRadius.all(
+    Radius.circular(24.0),
+  );
+  static const BorderRadius rounded3xl = BorderRadius.all(
+    Radius.circular(32.0),
+  );
+  static const BorderRadius roundedFull = BorderRadius.all(
+    Radius.circular(999.0),
+  );
 
   // Elevation tokens (soft, low-opacity navy shadows from DESIGN_TOKENS.md).
   static const List<BoxShadow> elevationLevel1 = [

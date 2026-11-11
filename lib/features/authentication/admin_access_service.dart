@@ -65,10 +65,10 @@ class AdminAccessService {
     ClinicMembershipRepository? membershipRepository,
     ClinicRepository? clinicRepository,
     AdminAccessRequestRepository? requestRepository,
-  })  : _membershipRepository =
-            membershipRepository ?? ClinicMembershipRepository(),
-        _clinicRepository = clinicRepository ?? ClinicRepository(),
-        _requestRepository = requestRepository ?? AdminAccessRequestRepository();
+  }) : _membershipRepository =
+           membershipRepository ?? ClinicMembershipRepository(),
+       _clinicRepository = clinicRepository ?? ClinicRepository(),
+       _requestRepository = requestRepository ?? AdminAccessRequestRepository();
 
   Future<AdminAccessResolution> resolve(User user) => resolveUid(user.uid);
 
@@ -92,7 +92,8 @@ class AdminAccessService {
         state: AdminAccessState.inactive,
         clinic: clinic,
         membership: membership,
-        message: '${clinic.name} is offline because its subscription is '
+        message:
+            '${clinic.name} is offline because its subscription is '
             'inactive. Queue controls and staff changes are paused until the '
             'network administrator enables the clinic again.',
       );
@@ -108,8 +109,9 @@ class AdminAccessService {
     final requests = await _requestRepository.getRequestsForUser(uid);
     if (requests.isNotEmpty) {
       final request = requests.first;
-      final clinic =
-          await _clinicRepository.getClinic(request.requestedClinicId);
+      final clinic = await _clinicRepository.getClinic(
+        request.requestedClinicId,
+      );
 
       switch (request.status) {
         case AdminAccessRequestStatus.pending:
@@ -129,7 +131,8 @@ class AdminAccessService {
             state: AdminAccessState.inconsistent,
             clinic: clinic,
             request: request,
-            message: 'Your access request was approved, but no active clinic '
+            message:
+                'Your access request was approved, but no active clinic '
                 'membership was found. Ask your clinic administrator to '
                 'activate your membership, then try again.',
           );

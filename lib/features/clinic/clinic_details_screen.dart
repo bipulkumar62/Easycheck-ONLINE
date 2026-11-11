@@ -284,10 +284,9 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 ),
                 const SizedBox(height: 4.0),
                 Text(
-                  l10n.t('clinicDisabledBody').replaceAll(
-                    '{clinic}',
-                    clinic.name,
-                  ),
+                  l10n
+                      .t('clinicDisabledBody')
+                      .replaceAll('{clinic}', clinic.name),
                   style: PatientTypography.bodySm.copyWith(
                     color: PatientColors.onErrorContainer,
                     height: 1.4,

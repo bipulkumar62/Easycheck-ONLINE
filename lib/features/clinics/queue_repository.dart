@@ -44,7 +44,9 @@ class QueueRepository {
   }
 
   Future<QueueSessionModel> getOrCreateTodaySession(
-      String clinicId, String date) async {
+    String clinicId,
+    String date,
+  ) async {
     try {
       final existing = await getSession(clinicId, date);
       if (existing != null) return existing;
@@ -63,13 +65,15 @@ class QueueRepository {
       }
       return newSession;
     } on FirebaseException catch (e) {
-      throw ServerFailure(
-          e.message ?? 'Failed to get or create queue session');
+      throw ServerFailure(e.message ?? 'Failed to get or create queue session');
     }
   }
 
   Future<int> incrementParcha(
-      String clinicId, String date, String performedBy) async {
+    String clinicId,
+    String date,
+    String performedBy,
+  ) async {
     final fs = _fs;
     if (fs == null) throw const ServerFailure('Firebase is not available');
 
@@ -90,8 +94,10 @@ class QueueRepository {
         );
         transaction.set(sessionRef, session.toMap());
       } else {
-        session =
-            QueueSessionModel.fromDocument(sessionDoc.data()!, sessionDoc.id);
+        session = QueueSessionModel.fromDocument(
+          sessionDoc.data()!,
+          sessionDoc.id,
+        );
       }
 
       if (session.status != 'active') {
@@ -123,7 +129,10 @@ class QueueRepository {
   }
 
   Future<int> decrementParcha(
-      String clinicId, String date, String performedBy) async {
+    String clinicId,
+    String date,
+    String performedBy,
+  ) async {
     final fs = _fs;
     if (fs == null) throw const ServerFailure('Firebase is not available');
 
@@ -133,8 +142,10 @@ class QueueRepository {
       final sessionDoc = await transaction.get(sessionRef);
 
       if (!sessionDoc.exists) return 0;
-      final session =
-          QueueSessionModel.fromDocument(sessionDoc.data()!, sessionDoc.id);
+      final session = QueueSessionModel.fromDocument(
+        sessionDoc.data()!,
+        sessionDoc.id,
+      );
       if (session.currentParchaNumber <= 0) return 0;
 
       final newNumber = session.currentParchaNumber - 1;
@@ -161,7 +172,10 @@ class QueueRepository {
   }
 
   Future<int> resetParcha(
-      String clinicId, String date, String performedBy) async {
+    String clinicId,
+    String date,
+    String performedBy,
+  ) async {
     final fs = _fs;
     if (fs == null) throw const ServerFailure('Firebase is not available');
 
@@ -172,8 +186,10 @@ class QueueRepository {
 
       int currentNumber = 0;
       if (sessionDoc.exists) {
-        final session =
-            QueueSessionModel.fromDocument(sessionDoc.data()!, sessionDoc.id);
+        final session = QueueSessionModel.fromDocument(
+          sessionDoc.data()!,
+          sessionDoc.id,
+        );
         currentNumber = session.currentParchaNumber;
 
         final history = _historyCollection();
@@ -258,7 +274,9 @@ class QueueRepository {
   }
 
   Future<List<QueueHistoryEntry>> getHistory(
-      String clinicId, String date) async {
+    String clinicId,
+    String date,
+  ) async {
     try {
       final col = _historyCollection();
       if (col == null) return [];
@@ -315,16 +333,19 @@ class QueueRepository {
         .where('sessionDate', isEqualTo: date)
         .snapshots()
         .map((snapshot) {
-      final entries = snapshot.docs
-          .map((doc) => QueueHistoryEntry.fromDocument(doc.data(), doc.id))
-          .toList();
-      entries.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      return entries.take(50).toList(growable: false);
-    });
+          final entries = snapshot.docs
+              .map((doc) => QueueHistoryEntry.fromDocument(doc.data(), doc.id))
+              .toList();
+          entries.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return entries.take(50).toList(growable: false);
+        });
   }
 
   Future<void> updateSessionStatus(
-      String clinicId, String date, String status) async {
+    String clinicId,
+    String date,
+    String status,
+  ) async {
     try {
       if (!QueueSessionModel.validStatuses.contains(status)) {
         throw const ServerFailure('Invalid session status');

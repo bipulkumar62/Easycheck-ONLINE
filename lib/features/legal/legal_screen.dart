@@ -35,17 +35,16 @@ class LegalScreen extends StatelessWidget {
 
   String get _summary => _isPrivacy
       ? 'This policy explains what information EasyCheck Online collects, why '
-          'we need it, who can see it, and the choices you have. We keep the '
-          'language plain so you can make an informed decision about using the '
-          'service.'
+            'we need it, who can see it, and the choices you have. We keep the '
+            'language plain so you can make an informed decision about using the '
+            'service.'
       : 'These terms explain the agreement between you and EasyCheck Online. '
-          'They cover acceptable use, clinic-staff access, the limits of the '
-          'service, and how disputes are handled. By using the service, you '
-          'agree to these terms.';
+            'They cover acceptable use, clinic-staff access, the limits of the '
+            'service, and how disputes are handled. By using the service, you '
+            'agree to these terms.';
 
-  List<LegalSection> get _sections => _isPrivacy
-      ? _privacySections
-      : _termsSections;
+  List<LegalSection> get _sections =>
+      _isPrivacy ? _privacySections : _termsSections;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +60,9 @@ class LegalScreen extends StatelessWidget {
                 width: 280,
                 height: 280,
                 decoration: BoxDecoration(
-                  color: PatientColors.secondaryContainer.withValues(alpha: 0.14),
+                  color: PatientColors.secondaryContainer.withValues(
+                    alpha: 0.14,
+                  ),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -175,8 +176,9 @@ class LegalScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.14),
+                  ),
                 ),
                 child: Icon(
                   _isPrivacy
@@ -187,13 +189,13 @@ class LegalScreen extends StatelessWidget {
                 ),
               );
               final datePill = Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
                 ),
                 child: const Text(
                   '5 NOV 2026',

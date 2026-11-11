@@ -46,15 +46,12 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
 
   bool get _isAdmin => widget.role == AuthRole.admin;
 
-  Color get _surface =>
-      _isAdmin ? AdminColors.surface : PatientColors.surface;
-  Color get _primary =>
-      _isAdmin ? AdminColors.primary : PatientColors.primary;
+  Color get _surface => _isAdmin ? AdminColors.surface : PatientColors.surface;
+  Color get _primary => _isAdmin ? AdminColors.primary : PatientColors.primary;
   Color get _onSurface =>
       _isAdmin ? AdminColors.onSurface : PatientColors.onSurface;
-  Color get _onSurfaceVariant => _isAdmin
-      ? AdminColors.onSurfaceVariant
-      : PatientColors.onSurfaceVariant;
+  Color get _onSurfaceVariant =>
+      _isAdmin ? AdminColors.onSurfaceVariant : PatientColors.onSurfaceVariant;
 
   @override
   void initState() {
@@ -95,10 +92,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           photoUrl: user.photoURL,
         );
         if (!mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.patientHome,
-          (route) => false,
-        );
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil(AppRoutes.patientHome, (route) => false);
         return;
       }
 
@@ -119,10 +114,9 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   void _routeForResolution(AdminAccessResolution resolution) {
     switch (resolution.state) {
       case AdminAccessState.approved:
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.adminDashboard,
-          (route) => false,
-        );
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(AppRoutes.adminDashboard, (route) => false);
         return;
       case AdminAccessState.pending:
         Navigator.of(context).pushReplacementNamed(
@@ -143,9 +137,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
         );
         return;
       case AdminAccessState.none:
-        Navigator.of(context).pushReplacementNamed(
-          AppRoutes.adminAccessRequest,
-        );
+        Navigator.of(context)
+            .pushReplacementNamed(AppRoutes.adminAccessRequest);
         return;
       case AdminAccessState.inactive:
         Navigator.of(context).pushReplacementNamed(
@@ -171,17 +164,13 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
       // Still return to the entry screen if sign-out fails.
     }
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   void _backToRoleSelection() {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   @override
@@ -236,10 +225,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
         SizedBox(
           width: 28,
           height: 28,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            color: _primary,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2.5, color: _primary),
         ),
       ],
     );
@@ -307,18 +293,12 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           FilledButton.icon(
             onPressed: _resolve,
             icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: const Text(
-              'Try again',
-              textAlign: TextAlign.center,
-            ),
+            label: const Text('Try again', textAlign: TextAlign.center),
             style: FilledButton.styleFrom(
               backgroundColor: _primary,
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(48),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -330,13 +310,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: _primary,
               minimumSize: const Size.fromHeight(44),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              side: BorderSide(
-                color: _primary.withValues(alpha: 0.35),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              side: BorderSide(color: _primary.withValues(alpha: 0.35)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -346,10 +321,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
               textAlign: TextAlign.center,
             ),
           ),
-          TextButton(
-            onPressed: _signOut,
-            child: const Text('Sign out'),
-          ),
+          TextButton(onPressed: _signOut, child: const Text('Sign out')),
         ],
       ),
     );

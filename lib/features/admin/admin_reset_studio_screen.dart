@@ -1,7 +1,9 @@
 import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
 import '../../app/routes/app_routes.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
@@ -123,7 +125,8 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
                     _buildWaitingAreaPreview(),
 
                     SizedBox(
-                      height: MediaQuery.of(context).padding.bottom + 64.0 + 16.0,
+                      height:
+                          MediaQuery.of(context).padding.bottom + 64.0 + 16.0,
                     ),
                   ]),
                 ),
@@ -345,8 +348,7 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
                     color: isSelected
                         ? AdminColors.onSurface
                         : AdminColors.onSurfaceVariant,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -435,7 +437,10 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10.0,
+              vertical: 4.0,
+            ),
             decoration: BoxDecoration(
               color: AdminColors.surfaceContainerLow,
               borderRadius: AppSpacing.roundedFull,
@@ -506,7 +511,9 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10.0, vertical: 3.0),
+                  horizontal: 10.0,
+                  vertical: 3.0,
+                ),
                 decoration: BoxDecoration(
                   color: AdminColors.surfaceContainerHigh,
                   borderRadius: AppSpacing.roundedFull,
@@ -545,7 +552,9 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10.0, vertical: 4.0),
+                  horizontal: 10.0,
+                  vertical: 4.0,
+                ),
                 decoration: BoxDecoration(
                   color: AdminColors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(8.0),
@@ -581,8 +590,10 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
                   height: 48.0,
                   child: ElevatedButton.icon(
                     onPressed: _handleQuickIncrement,
-                    icon: const Icon(Icons.add_circle_outline_rounded,
-                        size: 18.0),
+                    icon: const Icon(
+                      Icons.add_circle_outline_rounded,
+                      size: 18.0,
+                    ),
                     label: Text('Issue Next (${_parchiCount + 1})'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AdminColors.primary,
@@ -795,7 +806,8 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
   Widget _buildResetModalBackdrop() {
     return Positioned.fill(
       child: GestureDetector(
-        onTap: () => setState(() => _currentScenario = _StudioScenario.feedback),
+        onTap: () =>
+            setState(() => _currentScenario = _StudioScenario.feedback),
         behavior: HitTestBehavior.opaque,
         child: Container(
           color: AdminColors.onSurface.withValues(alpha: 0.40),
@@ -803,154 +815,159 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
               child: Center(
-            child: GestureDetector(
-              onTap: () {}, // Prevent tap from bubbling to backdrop
-              child: Container(
-                margin: const EdgeInsets.all(AppSpacing.gutter),
-                constraints: const BoxConstraints(maxWidth: 384.0),
-                padding: const EdgeInsets.all(24.0),
-                decoration: BoxDecoration(
-                  color: AdminColors.surfaceContainerLowest,
-                  borderRadius: BorderRadius.circular(32.0),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 32.0,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 56.0,
-                      height: 56.0,
-                      decoration: BoxDecoration(
-                        color: AdminColors.errorContainer.withValues(alpha: 0.60),
-                        borderRadius: BorderRadius.circular(24.0),
-                      ),
-                      child: const Icon(
-                        Icons.restart_alt_rounded,
-                        color: AdminColors.error,
-                        size: 32.0,
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    Text(
-                      'Reset today’s count?',
-                      style: AdminTypography.headlineMd.copyWith(
-                        color: AdminColors.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8.0),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: AdminTypography.bodyMd.copyWith(
-                          color: AdminColors.onSurfaceVariant,
+                child: GestureDetector(
+                  onTap: () {}, // Prevent tap from bubbling to backdrop
+                  child: Container(
+                    margin: const EdgeInsets.all(AppSpacing.gutter),
+                    constraints: const BoxConstraints(maxWidth: 384.0),
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: AdminColors.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(32.0),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 32.0,
+                          offset: Offset(0, 8),
                         ),
-                        children: const [
-                          TextSpan(
-                            text: 'This will reset the parchi tally for ',
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 56.0,
+                          height: 56.0,
+                          decoration: BoxDecoration(
+                            color: AdminColors.errorContainer.withValues(
+                              alpha: 0.60,
+                            ),
+                            borderRadius: BorderRadius.circular(24.0),
                           ),
-                          TextSpan(
-                            text: 'Apex Care Polyclinic',
-                            style: TextStyle(
-                              color: AdminColors.onSurface,
-                              fontWeight: FontWeight.w600,
+                          child: const Icon(
+                            Icons.restart_alt_rounded,
+                            color: AdminColors.error,
+                            size: 32.0,
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        Text(
+                          'Reset today’s count?',
+                          style: AdminTypography.headlineMd.copyWith(
+                            color: AdminColors.onSurface,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8.0),
+                        RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: AdminTypography.bodyMd.copyWith(
+                              color: AdminColors.onSurfaceVariant,
+                            ),
+                            children: const [
+                              TextSpan(
+                                text: 'This will reset the parchi tally for ',
+                              ),
+                              TextSpan(
+                                text: 'Apex Care Polyclinic',
+                                style: TextStyle(
+                                  color: AdminColors.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              TextSpan(text: ' back to 0.'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0,
+                            vertical: 4.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AdminColors.errorContainer,
+                            borderRadius: AppSpacing.roundedFull,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.confirmation_number_rounded,
+                                color: AdminColors.onErrorContainer,
+                                size: 16.0,
+                              ),
+                              const SizedBox(width: 6.0),
+                              Text(
+                                '$_parchiCount issued today',
+                                style: AdminTypography.labelMd.copyWith(
+                                  color: AdminColors.onErrorContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52.0,
+                          child: ElevatedButton.icon(
+                            onPressed: _handleConfirmReset,
+                            icon: const Icon(
+                              Icons.check_circle_rounded,
+                              size: 20.0,
+                            ),
+                            label: const Text('Confirm Reset to 0'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AdminColors.error,
+                              foregroundColor: AdminColors.onError,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.0),
+                              ),
+                              textStyle: AdminTypography.labelLg,
                             ),
                           ),
-                          TextSpan(text: ' back to 0.'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0,
-                        vertical: 4.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AdminColors.errorContainer,
-                        borderRadius: AppSpacing.roundedFull,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.confirmation_number_rounded,
-                            color: AdminColors.onErrorContainer,
-                            size: 16.0,
-                          ),
-                          const SizedBox(width: 6.0),
-                          Text(
-                            '$_parchiCount issued today',
-                            style: AdminTypography.labelMd.copyWith(
-                              color: AdminColors.onErrorContainer,
-                              fontWeight: FontWeight.w600,
+                        ),
+                        const SizedBox(height: 10.0),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48.0,
+                          child: OutlinedButton(
+                            onPressed: () => setState(
+                              () => _currentScenario = _StudioScenario.feedback,
                             ),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide.none,
+                              backgroundColor: AdminColors.surfaceContainerHigh,
+                              foregroundColor: AdminColors.onSurface,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.0),
+                              ),
+                              textStyle: AdminTypography.labelLg,
+                            ),
+                            child: const Text('Cancel'),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20.0),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52.0,
-                      child: ElevatedButton.icon(
-                        onPressed: _handleConfirmReset,
-                        icon: const Icon(Icons.check_circle_rounded,
-                            size: 20.0),
-                        label: const Text('Confirm Reset to 0'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AdminColors.error,
-                          foregroundColor: AdminColors.onError,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.0),
-                          ),
-                          textStyle: AdminTypography.labelLg,
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 10.0),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48.0,
-                      child: OutlinedButton(
-                        onPressed: () => setState(
-                          () => _currentScenario = _StudioScenario.feedback,
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide.none,
-                          backgroundColor: AdminColors.surfaceContainerHigh,
-                          foregroundColor: AdminColors.onSurface,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.0),
-                          ),
-                          textStyle: AdminTypography.labelLg,
-                        ),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildStaffAuditDrawer() {
     return Positioned.fill(
       child: GestureDetector(
-        onTap: () => setState(() => _currentScenario = _StudioScenario.feedback),
+        onTap: () =>
+            setState(() => _currentScenario = _StudioScenario.feedback),
         behavior: HitTestBehavior.opaque,
         child: Container(
           color: AdminColors.onSurface.withValues(alpha: 0.40),
@@ -964,274 +981,284 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
                   width: double.infinity,
                   constraints: const BoxConstraints(maxWidth: 448.0),
                   padding: const EdgeInsets.all(AppSpacing.spaceLg),
-              decoration: const BoxDecoration(
-                color: AdminColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32.0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x33000000),
-                    blurRadius: 32.0,
-                    offset: Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 48.0,
-                      height: 5.0,
-                      decoration: BoxDecoration(
-                        color: AdminColors.surfaceVariant,
-                        borderRadius: AppSpacing.roundedFull,
-                      ),
+                  decoration: const BoxDecoration(
+                    color: AdminColors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(32.0),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 32.0,
+                        offset: Offset(0, -4),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16.0),
-
-                  // Staff Identity
-                  Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 56.0,
-                        height: 56.0,
-                        decoration: BoxDecoration(
-                          color: AdminColors.secondaryFixed,
-                          borderRadius: BorderRadius.circular(24.0),
-                        ),
-                        child: const Icon(
-                          Icons.shield_rounded,
-                          color: AdminColors.onSecondaryFixed,
-                          size: 32.0,
+                      // Drag handle
+                      Center(
+                        child: Container(
+                          width: 48.0,
+                          height: 5.0,
+                          decoration: BoxDecoration(
+                            color: AdminColors.surfaceVariant,
+                            borderRadius: AppSpacing.roundedFull,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 14.0),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      const SizedBox(height: 16.0),
+
+                      // Staff Identity
+                      Row(
+                        children: [
+                          Container(
+                            width: 56.0,
+                            height: 56.0,
+                            decoration: BoxDecoration(
+                              color: AdminColors.secondaryFixed,
+                              borderRadius: BorderRadius.circular(24.0),
+                            ),
+                            child: const Icon(
+                              Icons.shield_rounded,
+                              color: AdminColors.onSecondaryFixed,
+                              size: 32.0,
+                            ),
+                          ),
+                          const SizedBox(width: 14.0),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Front Desk Lead',
+                                      style: AdminTypography.headlineSm
+                                          .copyWith(
+                                            color: AdminColors.onSurface,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 8.0),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0,
+                                        vertical: 2.0,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AdminColors.primaryFixed,
+                                        borderRadius: AppSpacing.roundedFull,
+                                      ),
+                                      child: Text(
+                                        'ACTIVE',
+                                        style: AdminTypography.labelSm.copyWith(
+                                          color: AdminColors.onPrimaryFixed,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 Text(
-                                  'Front Desk Lead',
-                                  style: AdminTypography.headlineSm.copyWith(
-                                    color: AdminColors.onSurface,
-                                    fontWeight: FontWeight.w600,
+                                  'reception.apex@easycheck.med',
+                                  style: AdminTypography.bodySm.copyWith(
+                                    color: AdminColors.secondary,
+                                    fontFamily: 'monospace',
                                   ),
                                 ),
-                                const SizedBox(width: 8.0),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0, vertical: 2.0),
-                                  decoration: BoxDecoration(
-                                    color: AdminColors.primaryFixed,
-                                    borderRadius: AppSpacing.roundedFull,
-                                  ),
-                                  child: Text(
-                                    'ACTIVE',
-                                    style: AdminTypography.labelSm.copyWith(
-                                      color: AdminColors.onPrimaryFixed,
-                                    ),
+                                Text(
+                                  'Assigned to: Apex Care Polyclinic',
+                                  style: AdminTypography.labelSm.copyWith(
+                                    color: AdminColors.onSurfaceVariant,
                                   ),
                                 ),
                               ],
                             ),
-                            Text(
-                              'reception.apex@easycheck.med',
-                              style: AdminTypography.bodySm.copyWith(
-                                color: AdminColors.secondary,
-                                fontFamily: 'monospace',
-                              ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16.0),
+
+                      // Audit summary card
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.spaceMd),
+                        decoration: BoxDecoration(
+                          color: AdminColors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildAuditMetaRow(
+                              label: 'Session Auth Protocol',
+                              value: 'Google OAuth 2.0',
+                              valueIcon: Icons.verified_user_rounded,
+                              iconColor: AdminColors.primary,
                             ),
-                            Text(
-                              'Assigned to: Apex Care Polyclinic',
-                              style: AdminTypography.labelSm.copyWith(
-                                color: AdminColors.onSurfaceVariant,
-                              ),
+                            const SizedBox(height: 8.0),
+                            _buildAuditMetaRow(
+                              label: 'Daily Reset Permissions',
+                              value: 'Granted (Lead Tier)',
+                              valueColor: AdminColors.primary,
+                              isBold: true,
+                            ),
+                            const SizedBox(height: 8.0),
+                            _buildAuditMetaRow(
+                              label: 'Last Audit Checkpoint',
+                              value: 'Today, 08:30 AM IST',
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 16.0),
+                      const SizedBox(height: 12.0),
 
-                  // Audit summary card
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.spaceMd),
-                    decoration: BoxDecoration(
-                      color: AdminColors.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildAuditMetaRow(
-                          label: 'Session Auth Protocol',
-                          value: 'Google OAuth 2.0',
-                          valueIcon: Icons.verified_user_rounded,
-                          iconColor: AdminColors.primary,
-                        ),
-                        const SizedBox(height: 8.0),
-                        _buildAuditMetaRow(
-                          label: 'Daily Reset Permissions',
-                          value: 'Granted (Lead Tier)',
-                          valueColor: AdminColors.primary,
-                          isBold: true,
-                        ),
-                        const SizedBox(height: 8.0),
-                        _buildAuditMetaRow(
-                          label: 'Last Audit Checkpoint',
-                          value: 'Today, 08:30 AM IST',
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12.0),
-
-                  // Action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12.0),
-                          decoration: BoxDecoration(
-                            color: AdminColors.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(12.0),
+                              decoration: BoxDecoration(
+                                color: AdminColors.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.receipt_long_rounded,
-                                      size: 16.0),
-                                  const SizedBox(width: 4.0),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.receipt_long_rounded,
+                                        size: 16.0,
+                                      ),
+                                      const SizedBox(width: 4.0),
+                                      Text(
+                                        'Audit Activity',
+                                        style: AdminTypography.labelMd.copyWith(
+                                          color: AdminColors.onSurface,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2.0),
                                   Text(
-                                    'Audit Activity',
-                                    style: AdminTypography.labelMd.copyWith(
-                                      color: AdminColors.onSurface,
-                                      fontWeight: FontWeight.w600,
+                                    'View 18 shift actions',
+                                    style: AdminTypography.bodySm.copyWith(
+                                      color: AdminColors.onSurfaceVariant,
+                                      fontSize: 11.0,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2.0),
-                              Text(
-                                'View 18 shift actions',
-                                style: AdminTypography.bodySm.copyWith(
-                                  color: AdminColors.onSurfaceVariant,
-                                  fontSize: 11.0,
-                                ),
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(12.0),
+                              decoration: BoxDecoration(
+                                color: AdminColors.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(12.0),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12.0),
-                          decoration: BoxDecoration(
-                            color: AdminColors.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.print_rounded, size: 16.0),
-                                  const SizedBox(width: 4.0),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.print_rounded,
+                                        size: 16.0,
+                                      ),
+                                      const SizedBox(width: 4.0),
+                                      Text(
+                                        'Reprint Slip',
+                                        style: AdminTypography.labelMd.copyWith(
+                                          color: AdminColors.onSurface,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2.0),
                                   Text(
-                                    'Reprint Slip',
-                                    style: AdminTypography.labelMd.copyWith(
-                                      color: AdminColors.onSurface,
-                                      fontWeight: FontWeight.w600,
+                                    'Bluetooth Desk Printer',
+                                    style: AdminTypography.bodySm.copyWith(
+                                      color: AdminColors.onSurfaceVariant,
+                                      fontSize: 11.0,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2.0),
-                              Text(
-                                'Bluetooth Desk Printer',
-                                style: AdminTypography.bodySm.copyWith(
-                                  color: AdminColors.onSurfaceVariant,
-                                  fontSize: 11.0,
-                                ),
-                              ),
-                            ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16.0),
+
+                      // Logout button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52.0,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              if (Firebase.apps.isNotEmpty) {
+                                await FirebaseAuth.instance.signOut();
+                              }
+                            } catch (_) {
+                              // Returning to role selection is still safe.
+                            }
+                            if (!mounted) return;
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              AppRoutes.initial,
+                              (route) => false,
+                            );
+                          },
+                          icon: const Icon(Icons.logout_rounded, size: 20.0),
+                          label: const Text('Log out of Apex Terminal'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AdminColors.errorContainer,
+                            foregroundColor: AdminColors.onErrorContainer,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                            ),
+                            textStyle: AdminTypography.labelLg,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8.0),
+
+                      // Close panel button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44.0,
+                        child: TextButton(
+                          onPressed: () => setState(
+                            () => _currentScenario = _StudioScenario.feedback,
+                          ),
+                          child: Text(
+                            'Close Panel',
+                            style: AdminTypography.labelMd.copyWith(
+                              color: AdminColors.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 16.0),
-
-                  // Logout button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52.0,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        try {
-                          if (Firebase.apps.isNotEmpty) {
-                            await FirebaseAuth.instance.signOut();
-                          }
-                        } catch (_) {
-                          // Returning to role selection is still safe.
-                        }
-                        if (!mounted) return;
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          AppRoutes.initial,
-                          (route) => false,
-                        );
-                      },
-                      icon: const Icon(Icons.logout_rounded, size: 20.0),
-                      label: const Text('Log out of Apex Terminal'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AdminColors.errorContainer,
-                        foregroundColor: AdminColors.onErrorContainer,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        textStyle: AdminTypography.labelLg,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8.0),
-
-                  // Close panel button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44.0,
-                    child: TextButton(
-                      onPressed: () => setState(
-                        () => _currentScenario = _StudioScenario.feedback,
-                      ),
-                      child: Text(
-                        'Close Panel',
-                        style: AdminTypography.labelMd.copyWith(
-                          color: AdminColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildAuditMetaRow({
@@ -1314,7 +1341,9 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
                     Text(
                       _toastSubtitle,
                       style: AdminTypography.bodySm.copyWith(
-                        color: AdminColors.inverseOnSurface.withValues(alpha: 0.8),
+                        color: AdminColors.inverseOnSurface.withValues(
+                          alpha: 0.8,
+                        ),
                       ),
                     ),
                   ],
@@ -1337,7 +1366,10 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
 
   Widget _buildBottomNav(BuildContext context) {
     const tabs = [
-      _AdminTabItem(icon: Icons.format_list_bulleted_rounded, label: 'Live Queue'),
+      _AdminTabItem(
+        icon: Icons.format_list_bulleted_rounded,
+        label: 'Live Queue',
+      ),
       _AdminTabItem(icon: Icons.how_to_reg_rounded, label: 'Intake'),
       _AdminTabItem(icon: Icons.medical_services_rounded, label: 'Staff'),
       _AdminTabItem(icon: Icons.manage_accounts_rounded, label: 'Clinic'),
@@ -1363,9 +1395,8 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
           return GestureDetector(
             onTap: () {
               if (i == 0) {
-                Navigator.of(context).pushReplacementNamed(
-                  AppRoutes.adminDashboard,
-                );
+                Navigator.of(context)
+                    .pushReplacementNamed(AppRoutes.adminDashboard);
               } else {
                 setState(() => _selectedTab = i);
               }
@@ -1379,13 +1410,17 @@ class _AdminResetStudioScreenState extends State<AdminResetStudioScreen> {
                   Icon(
                     tabs[i].icon,
                     size: 22.0,
-                    color: isActive ? AdminColors.primary : AdminColors.onSurfaceVariant,
+                    color: isActive
+                        ? AdminColors.primary
+                        : AdminColors.onSurfaceVariant,
                   ),
                   const SizedBox(height: 2.0),
                   Text(
                     tabs[i].label,
                     style: AdminTypography.labelSm.copyWith(
-                      color: isActive ? AdminColors.primary : AdminColors.onSurfaceVariant,
+                      color: isActive
+                          ? AdminColors.primary
+                          : AdminColors.onSurfaceVariant,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),

@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
+
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_typography.dart';
 import 'live_dot.dart';
 
-enum ClinicOperationalStatus {
-  available,
-  delayed,
-  unavailable,
-}
+enum ClinicOperationalStatus { available, delayed, unavailable }
 
 /// Generic Status Pill matching the exact specs in DESIGN_TOKENS.md.
 class StatusPill extends StatelessWidget {
   final ClinicOperationalStatus status;
   final String label;
 
-  const StatusPill({
-    super.key,
-    required this.status,
-    required this.label,
-  });
+  const StatusPill({super.key, required this.status, required this.label});
 
   @override
   Widget build(BuildContext context) {

@@ -362,7 +362,7 @@ class _PhotoCropDialogState extends State<_PhotoCropDialog> {
           value: value,
           min: min,
           max: max,
-          divisions: min == 1 && max == 3 ? 40 : 40,
+          divisions: 40,
           activeColor: scheme.primary,
           onChanged: onChanged,
         ),

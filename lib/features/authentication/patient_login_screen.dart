@@ -33,7 +33,9 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeContinueSession());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _maybeContinueSession(),
+    );
   }
 
   /// A valid Firebase session already means the patient has signed in. Skip the
@@ -118,9 +120,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
 
   void _openLegal(LegalDocument document) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => LegalScreen(document: document),
-      ),
+      MaterialPageRoute<void>(builder: (_) => LegalScreen(document: document)),
     );
   }
 
@@ -253,9 +253,14 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -271,11 +276,7 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
                             const SizedBox(height: 20),
 
                             // Canonical square brand mark.
-                            const BrandMark(
-                              size: 58,
-                              padding: 7,
-                              radius: 16,
-                            ),
+                            const BrandMark(size: 58, padding: 7, radius: 16),
 
                             const SizedBox(height: 10),
 
@@ -319,7 +320,9 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
                                 fontFamily: 'Inter',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: _onSurfaceVariant.withValues(alpha: 0.80),
+                                color: _onSurfaceVariant.withValues(
+                                  alpha: 0.80,
+                                ),
                                 letterSpacing: 0.8,
                               ),
                             ),
@@ -344,8 +347,9 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
                             if (_hasSignedInAccount) ...[
                               const SizedBox(height: 4),
                               TextButton(
-                                onPressed:
-                                    _isSigningIn ? null : _useDifferentAccount,
+                                onPressed: _isSigningIn
+                                    ? null
+                                    : _useDifferentAccount,
                                 child: Text(
                                   l10n.t('useDifferentAccount'),
                                   style: const TextStyle(
@@ -436,60 +440,60 @@ class _PatientLoginScreenState extends State<PatientLoginScreen> {
           ),
         ],
       ),
-          child: Column(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Feature Header: verified icon + label
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Feature Header: verified icon + label
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.verified_rounded, color: _secondary, size: 18),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      l10n.t('opdParchiTracker'),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: _secondary,
-                      ),
-                    ),
+              const Icon(Icons.verified_rounded, color: _secondary, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  l10n.t('opdParchiTracker'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: _secondary,
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-
-              // H1: Your doctor, closer than ever.
-              Text(
-                l10n.t('patientLoginHeadline'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: _primaryContainer,
-                  height: 1.3,
-                  letterSpacing: -0.3,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Body description
-              Text(
-                l10n.t('patientLoginSubtitle'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: _onSurfaceVariant,
-                  height: 1.45,
                 ),
               ),
             ],
           ),
+
+          const SizedBox(height: 10),
+
+          // H1: Your doctor, closer than ever.
+          Text(
+            l10n.t('patientLoginHeadline'),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: _primaryContainer,
+              height: 1.3,
+              letterSpacing: -0.3,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Body description
+          Text(
+            l10n.t('patientLoginSubtitle'),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: _onSurfaceVariant,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

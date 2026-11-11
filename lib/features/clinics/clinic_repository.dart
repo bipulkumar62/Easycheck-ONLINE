@@ -46,7 +46,10 @@ class ClinicRepository {
     }
   }
 
-  Future<void> updateClinic(String clinicId, Map<String, dynamic> updates) async {
+  Future<void> updateClinic(
+    String clinicId,
+    Map<String, dynamic> updates,
+  ) async {
     try {
       final col = _clinicsCollection();
       if (col == null) return;
@@ -69,14 +72,11 @@ class ClinicRepository {
   Stream<List<ClinicModel>> activeClinicsStream() {
     final col = _clinicsCollection();
     if (col == null) return Stream.value([]);
-    return col
-        .where('isActive', isEqualTo: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => ClinicModel.fromDocument(doc.data(), doc.id))
-              .toList();
-        });
+    return col.where('isActive', isEqualTo: true).snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => ClinicModel.fromDocument(doc.data(), doc.id))
+          .toList();
+    });
   }
 
   /// Every clinic the patient is allowed to discover, including clinics that

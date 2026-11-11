@@ -26,7 +26,9 @@ class ClinicMembershipRepository {
   String _documentId(String userId, String clinicId) => '${userId}_$clinicId';
 
   Future<ClinicMembershipModel?> getMembership(
-      String userId, String clinicId) async {
+    String userId,
+    String clinicId,
+  ) async {
     try {
       final col = _membershipsCollection();
       if (col == null) return null;
@@ -51,7 +53,10 @@ class ClinicMembershipRepository {
   }
 
   Future<void> updateMembership(
-      String userId, String clinicId, Map<String, dynamic> updates) async {
+    String userId,
+    String clinicId,
+    Map<String, dynamic> updates,
+  ) async {
     try {
       final col = _membershipsCollection();
       if (col == null) return;
@@ -61,8 +66,7 @@ class ClinicMembershipRepository {
     }
   }
 
-  Future<List<ClinicMembershipModel>> getUserMemberships(
-      String userId) async {
+  Future<List<ClinicMembershipModel>> getUserMemberships(String userId) async {
     try {
       final col = _membershipsCollection();
       if (col == null) return const [];
@@ -78,8 +82,7 @@ class ClinicMembershipRepository {
     }
   }
 
-  Future<List<ClinicMembershipModel>> getClinicMembers(
-      String clinicId) async {
+  Future<List<ClinicMembershipModel>> getClinicMembers(String clinicId) async {
     try {
       final col = _membershipsCollection();
       if (col == null) return const [];
@@ -96,7 +99,10 @@ class ClinicMembershipRepository {
   }
 
   Future<bool> hasPermission(
-      String userId, String clinicId, String permission) async {
+    String userId,
+    String clinicId,
+    String permission,
+  ) async {
     try {
       final membership = await getMembership(userId, clinicId);
       if (membership == null) return false;

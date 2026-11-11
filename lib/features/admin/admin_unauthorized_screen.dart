@@ -34,10 +34,8 @@ class AdminUnauthorizedScreen extends StatelessWidget {
       // Still return to the role selection screen.
     }
     if (!context.mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   @override
@@ -46,8 +44,8 @@ class AdminUnauthorizedScreen extends StatelessWidget {
     final body = message?.trim().isNotEmpty == true
         ? message!.trim()
         : 'Your Google account is signed in, but it does not have an active '
-            'clinic membership. The clinic dashboard is available only after '
-            'a Super Admin approves a clinic access request.';
+              'clinic membership. The clinic dashboard is available only after '
+              'a Super Admin approves a clinic access request.';
 
     return AdminAuthShell(
       title: 'Access Review',
@@ -80,9 +78,9 @@ class AdminUnauthorizedScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => Navigator.of(context).pushReplacementNamed(
-              AppRoutes.adminAccessRequest,
-            ),
+            onPressed: () =>
+                Navigator.of(context)
+                    .pushReplacementNamed(AppRoutes.adminAccessRequest),
             icon: const Icon(Icons.add_business_rounded, size: 19),
             label: const Text(
               'Request clinic access',
@@ -97,10 +95,7 @@ class AdminUnauthorizedScreen extends StatelessWidget {
               backgroundColor: AdminColors.primary,
               foregroundColor: AdminColors.onPrimary,
               minimumSize: const Size.fromHeight(50),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -122,10 +117,7 @@ class AdminUnauthorizedScreen extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: AdminColors.secondary,
               minimumSize: const Size.fromHeight(48),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               side: BorderSide(
                 color: AdminColors.secondary.withValues(alpha: 0.35),
               ),

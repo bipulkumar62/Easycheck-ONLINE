@@ -326,18 +326,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _confirmReset() async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reset today’s count?'),
-        content: const Text(
-          'The parchi counter will be set to 0 and the reset will be written '
-          'to the audit history.',
-        ),
+        title: Text(l10n.t('resetCountQuestion')),
+        content: Text(l10n.t('resetCountBody')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.t('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -345,7 +343,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               backgroundColor: AdminColors.error,
               foregroundColor: AdminColors.onError,
             ),
-            child: const Text('Reset count'),
+            child: Text(l10n.t('resetCountConfirm')),
           ),
         ],
       ),
@@ -354,6 +352,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (confirmed != true) return;
     final clinic = _clinic;
     if (clinic == null || _busy) return;
+    if (_pendingCounterDelta != 0 || _counterSyncing) {
+      _showMessage(l10n.t('couldNotUpdateCounter'));
+      return;
+    }
 
     setState(() => _busy = true);
     try {
@@ -362,10 +364,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _dateKey,
         _user?.uid ?? 'system',
       );
-      if (mounted) setState(() => _count = value);
-      _showMessage('Parchi tally reset to 0.');
+      if (mounted) {
+        setState(() {
+          _count = value;
+          _lastServerCount = value;
+          _pendingCounterDelta = 0;
+        });
+      }
+      _showMessage(l10n.t('parchiReset'));
     } catch (error) {
-      _showMessage('Could not reset the counter: $error');
+      _showMessage(l10n.t('couldNotResetCounter'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -373,6 +381,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Future<void> _editYesterdayCount(ClinicModel clinic) async {
     if (_busy) return;
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(
       text: '${clinic.yesterdayParchiCount}',
     );
@@ -386,7 +395,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               final parsed = int.tryParse(controller.text.trim());
               if (parsed == null || parsed < 0 || parsed > 99999) {
                 setDialogState(() {
-                  error = 'Enter a whole number between 0 and 99,999.';
+                  error = l10n.t('enterValidCount');
                 });
                 return;
               }
@@ -394,15 +403,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             }
 
             return AlertDialog(
-              title: const Text('Edit yesterday’s count'),
+              title: Text(l10n.t('editYesterdayCount')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Update the parchi count patients see for yesterday. '
-                    'Today’s live counter is not changed. This correction is '
-                    'saved to the audit history.',
+                    l10n.t('editYesterdayBody'),
                     style: AppTypography.bodySm.copyWith(
                       color: AdminColors.onSurfaceVariant,
                     ),
@@ -415,7 +422,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     onSubmitted: (_) => submit(),
                     decoration: InputDecoration(
-                      labelText: 'Yesterday’s parchi count',
+                      labelText: l10n.t('yesterdayParchiCountLabel'),
                       errorText: error,
                       prefixIcon: const Icon(Icons.history_rounded),
                     ),
@@ -425,9 +432,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.t('cancel')),
                 ),
-                FilledButton(onPressed: submit, child: const Text('Save')),
+                FilledButton(onPressed: submit, child: Text(l10n.t('save'))),
               ],
             );
           },
@@ -438,7 +445,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     if (value == null || !mounted) return;
     if (value == clinic.yesterdayParchiCount) {
-      _showMessage('Yesterday’s count is already $value.');
+      _showMessage(
+        l10n.t('yesterdayCountAlready').replaceAll('{count}', '$value'),
+      );
       return;
     }
 
@@ -453,12 +462,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       setState(() {
         _clinic = _clinic?.copyWith(yesterdayParchiCount: updated);
       });
-      _showMessage('Yesterday’s parchi count updated to $updated.');
+      _showMessage(l10n.t('yesterdayUpdated'));
     } catch (_) {
-      _showMessage(
-        'Could not update yesterday’s count. Check your connection and try '
-        'again.',
-      );
+      _showMessage(l10n.t('couldNotUpdateYesterdayCount'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -480,41 +486,44 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           isOnline: status == 'available',
         );
       });
-      _showMessage('Doctor availability updated.');
-    } catch (error) {
-      _showMessage('Could not update availability: $error');
+      _showMessage(AppLocalizations.of(context).t('doctorAvailabilityUpdated'));
+    } catch (_) {
+      _showMessage(
+        AppLocalizations.of(context).t('couldNotUpdateAvailability'),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _editDoctorTiming(ClinicModel clinic) async {
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: clinic.doctorTiming);
     final timing = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Doctor timing'),
+        title: Text(l10n.t('doctorTimingTitle')),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLength: 80,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'Clinic hours',
-            hintText: 'Mon–Sat · 9:00 AM – 5:00 PM',
-            helperText: 'This text is shown to patients on the clinic screen.',
-            prefixIcon: Icon(Icons.schedule_rounded),
+          decoration: InputDecoration(
+            labelText: l10n.t('clinicHoursLabel'),
+            hintText: l10n.t('clinicHoursHint'),
+            helperText: l10n.t('clinicHoursHelper'),
+            prefixIcon: const Icon(Icons.schedule_rounded),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(l10n.t('cancel')),
           ),
           FilledButton(
             onPressed: () =>
                 Navigator.of(dialogContext).pop(controller.text.trim()),
-            child: const Text('Save timing'),
+            child: Text(l10n.t('saveTiming')),
           ),
         ],
       ),
@@ -537,11 +546,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       });
       _showMessage(
         timing.isEmpty
-            ? 'Doctor timing cleared.'
-            : 'Doctor timing updated for patients.',
+            ? AppLocalizations.of(context).t('doctorTimingCleared')
+            : AppLocalizations.of(context).t('doctorTimingUpdated'),
       );
-    } catch (error) {
-      _showMessage('Could not update doctor timing: $error');
+    } catch (_) {
+      _showMessage(
+        AppLocalizations.of(context).t('couldNotUpdateDoctorTiming'),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -578,10 +589,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           doctorSpecialty: draft.specialty,
         );
       });
-      _showMessage('Doctor profile updated for patients.');
+      _showMessage(AppLocalizations.of(context).t('doctorProfileUpdated'));
     } catch (_) {
       if (!mounted) return;
-      _showMessage('Could not update the doctor profile. Please try again.');
+      _showMessage(
+        AppLocalizations.of(context).t('couldNotUpdateDoctorProfile'),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -622,13 +635,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       setState(() {
         _clinic = clinic.copyWith(doctorPhotoUrl: url);
       });
-      _showMessage('Doctor photo updated for patients.');
+      _showMessage(AppLocalizations.of(context).t('doctorPhotoUpdated'));
     } on AppFailure catch (failure) {
       if (!mounted) return;
       _showMessage(failure.message);
     } catch (_) {
       if (!mounted) return;
-      _showMessage('Could not update the doctor photo. Please try again.');
+      _showMessage(AppLocalizations.of(context).t('couldNotUpdateDoctorPhoto'));
     } finally {
       if (mounted) setState(() => _isUploadingPhoto = false);
     }
@@ -669,13 +682,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       setState(() {
         _clinic = clinic.copyWith(clinicPhotoUrl: url);
       });
-      _showMessage('Clinic photo updated for patients.');
+      _showMessage(AppLocalizations.of(context).t('clinicPhotoUpdated'));
     } on AppFailure catch (failure) {
       if (!mounted) return;
       _showMessage(failure.message);
     } catch (_) {
       if (!mounted) return;
-      _showMessage('Could not update the clinic photo. Please try again.');
+      _showMessage(AppLocalizations.of(context).t('couldNotUpdateClinicPhoto'));
     } finally {
       if (mounted) setState(() => _isUploadingClinicPhoto = false);
     }
@@ -979,17 +992,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.showAuto(context, message);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_loading) {
       return _buildShell(
-        title: 'Clinic Admin',
-        subtitle: 'EASYCHECK ADMIN',
+        title: l10n.t('clinicAdminTitle'),
+        subtitle: l10n.t('easycheckAdmin'),
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 80),
           child: Center(child: CircularProgressIndicator()),
@@ -999,16 +1011,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     if (_error != null) {
       return _buildShell(
-        title: 'Clinic Admin',
-        subtitle: 'EASYCHECK ADMIN',
+        title: l10n.t('clinicAdminTitle'),
+        subtitle: l10n.t('easycheckAdmin'),
         child: _buildErrorState(),
       );
     }
 
     if (_clinic == null) {
       return _buildShell(
-        title: 'Clinic Admin',
-        subtitle: 'EASYCHECK ADMIN',
+        title: l10n.t('clinicAdminTitle'),
+        subtitle: l10n.t('easycheckAdmin'),
         child: _buildUnassignedState(),
       );
     }
@@ -1107,6 +1119,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final topInset = MediaQuery.of(context).padding.top;
     final user = _user;
     final photoUrl = user?.photoURL;
+    final l10n = AppLocalizations.of(context);
 
     return Positioned(
       top: 0,
@@ -1166,26 +1179,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.spaceSm),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AdminColors.surfaceContainer,
-                      shape: BoxShape.circle,
-                      image: photoUrl != null && photoUrl.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(photoUrl),
-                              fit: BoxFit.cover,
+                  const LanguageToggle(compact: true),
+                  const SizedBox(width: AppSpacing.spaceXs),
+                  Tooltip(
+                    message: l10n.t('signedInAccountLabel'),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AdminColors.surfaceContainer,
+                        shape: BoxShape.circle,
+                        image: photoUrl != null && photoUrl.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(photoUrl),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: photoUrl == null || photoUrl.isEmpty
+                          ? const Icon(
+                              Icons.person_rounded,
+                              color: AdminColors.primary,
+                              size: 20,
                             )
                           : null,
                     ),
-                    child: photoUrl == null || photoUrl.isEmpty
-                        ? const Icon(
-                            Icons.person_rounded,
-                            color: AdminColors.primary,
-                            size: 20,
-                          )
-                        : null,
                   ),
                 ],
               ),
@@ -1198,11 +1216,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildBottomNav() {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    const items = [
-      (Icons.format_list_bulleted_rounded, 'Live Queue'),
-      (Icons.how_to_reg_rounded, 'Intake'),
-      (Icons.medical_services_rounded, 'Staff'),
-      (Icons.manage_accounts_rounded, 'Clinic'),
+    final l10n = AppLocalizations.of(context);
+    final items = [
+      (Icons.format_list_bulleted_rounded, l10n.t('liveQueueTab')),
+      (Icons.how_to_reg_rounded, l10n.t('intakeTab')),
+      (Icons.medical_services_rounded, l10n.t('staffTab')),
+      (Icons.manage_accounts_rounded, l10n.t('clinicTab')),
     ];
 
     return Container(
@@ -1270,9 +1289,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildQueueTab() {
     final clinic = _clinic!;
+    final l10n = AppLocalizations.of(context);
     return _buildPage(
       title: clinic.name,
-      subtitle: 'DOCTOR CONSOLE • EASYCHECK',
+      subtitle: '${l10n.t('doctorConsole')} • EASYCHECK',
       children: [
         _buildClinicHeaderCard(clinic),
         const SizedBox(height: AppSpacing.spaceMd),
@@ -1283,19 +1303,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  String get _doctorGreeting {
+  String _doctorGreeting(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    final part = hour < 12
-        ? 'Good morning'
-        : hour < 17
-        ? 'Good afternoon'
-        : 'Good evening';
+    final part = l10n.greetingForHour(hour);
     final name = _clinic?.doctorName.trim() ?? '';
     return name.isEmpty ? '$part, Doctor' : '$part, $name';
   }
 
   Widget _buildClinicHeaderCard(ClinicModel clinic) {
-    final status = _isActive ? 'LIVE QUEUE' : 'QUEUE PAUSED';
+    final l10n = AppLocalizations.of(context);
+    final status = _isActive
+        ? l10n.t('liveQueueStatus')
+        : l10n.t('queuePausedStatus');
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1346,11 +1365,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     pulse: _isActive,
                     padding: const EdgeInsets.fromLTRB(9, 4, 10, 4),
                   ),
-                  const Text(
-                    'DOCTOR CONSOLE',
+                  Text(
+                    l10n.t('doctorConsole'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 9.5,
                       fontWeight: FontWeight.w700,
@@ -1362,7 +1381,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                _doctorGreeting,
+                _doctorGreeting(l10n),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -1409,13 +1428,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   _buildHeroChip(
                     icon: Icons.schedule_rounded,
                     label: clinic.doctorTiming.trim().isEmpty
-                        ? 'Set doctor timing'
+                        ? l10n.t('setDoctorTiming')
                         : clinic.doctorTiming,
                     onTap: _busy ? null : () => _editDoctorTiming(clinic),
                   ),
                   _buildHeroChip(
                     icon: Icons.confirmation_number_outlined,
-                    label: 'Today · $_count parchi',
+                    label: l10n
+                        .t('todaysParchiChip')
+                        .replaceAll('{count}', '$_count'),
                   ),
                 ],
               ),
@@ -1473,6 +1494,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildDoctorAvailabilityCard(ClinicModel clinic) {
+    final l10n = AppLocalizations.of(context);
     final status = clinic.doctorStatus;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.spaceLg),
@@ -1494,7 +1516,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  'DOCTOR AVAILABILITY',
+                  l10n.t('doctorAvailability'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSm.copyWith(
@@ -1507,11 +1529,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               IconButton(
                 onPressed: _busy ? null : () => _editDoctorProfile(clinic),
-                tooltip: 'Edit doctor profile',
+                tooltip: l10n.t('editDoctorProfile'),
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.edit_outlined, size: 17),
               ),
-              _buildAvailabilityPill(status),
+              _buildAvailabilityPill(status, l10n),
             ],
           ),
           const SizedBox(height: AppSpacing.spaceMd),
@@ -1520,7 +1542,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ? (clinic.doctorCredentials.isEmpty
                       ? clinic.doctorName
                       : '${clinic.doctorName}, ${clinic.doctorCredentials}')
-                : 'Doctor not assigned',
+                : l10n.t('doctorNotAssigned'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.headlineSm.copyWith(
@@ -1532,7 +1554,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Text(
             clinic.doctorSpecialty.isNotEmpty
                 ? clinic.doctorSpecialty
-                : 'Update your clinic profile to show the doctor’s specialty.',
+                : l10n.t('updateSpecialty'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.bodySm.copyWith(
@@ -1564,7 +1586,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'DOCTOR TIMING',
+                            l10n.t('doctorTiming'),
                             style: AppTypography.labelSm.copyWith(
                               color: AdminColors.onSurfaceVariant,
                               fontSize: 9.5,
@@ -1574,7 +1596,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           const SizedBox(height: 2),
                           Text(
                             clinic.doctorTiming.trim().isEmpty
-                                ? 'Add clinic hours shown to patients'
+                                ? l10n.t('addClinicHours')
                                 : clinic.doctorTiming,
                             style: AppTypography.bodySm.copyWith(
                               color: clinic.doctorTiming.trim().isEmpty
@@ -1601,7 +1623,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Row(
             children: [
               _buildStatusButton(
-                label: 'Available',
+                label: l10n.t('statusAvailable'),
                 icon: Icons.check_circle_outline_rounded,
                 selected: status == 'available',
                 color: AdminColors.primary,
@@ -1609,7 +1631,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(width: AppSpacing.spaceSm),
               _buildStatusButton(
-                label: 'Delayed',
+                label: l10n.t('statusDelayed'),
                 icon: Icons.schedule_rounded,
                 selected: status == 'delayed',
                 color: const Color(0xFFD97706),
@@ -1617,7 +1639,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(width: AppSpacing.spaceSm),
               _buildStatusButton(
-                label: 'Off-Duty',
+                label: l10n.t('statusOffDuty'),
                 icon: Icons.block_rounded,
                 selected: status == 'offDuty',
                 color: AdminColors.onSurfaceVariant,
@@ -1630,20 +1652,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildAvailabilityPill(String status) {
+  Widget _buildAvailabilityPill(String status, AppLocalizations l10n) {
     final (label, background, foreground) = switch (status) {
       'delayed' => (
-        'Delayed',
+        l10n.t('statusDelayed'),
         const Color(0xFFFEF3C7),
         const Color(0xFFB45309),
       ),
       'offDuty' => (
-        'Off-Duty',
+        l10n.t('statusOffDuty'),
         AdminColors.surfaceContainerHigh,
         AdminColors.onSurfaceVariant,
       ),
       _ => (
-        'Online',
+        l10n.t('online'),
         AdminColors.secondaryContainer,
         AdminColors.onSecondaryContainer,
       ),
@@ -1712,6 +1734,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildCounterCard(ClinicModel clinic) {
+    final l10n = AppLocalizations.of(context);
     final dateLabel = DateFormat('EEEE, MMMM d').format(_now);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.spaceLg),
@@ -1737,7 +1760,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Today's Parchi Count",
+                      l10n.t('todaysParchiCount'),
                       style: AppTypography.headlineMd.copyWith(
                         color: AdminColors.onSurface,
                         fontWeight: FontWeight.w700,
@@ -1780,13 +1803,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: Center(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text(
-                        '$_count',
-                        maxLines: 1,
-                        style: AppTypography.displayLg.copyWith(
-                          fontSize: 56,
-                          color: AdminColors.primary,
-                          fontWeight: FontWeight.w700,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: Tween<double>(
+                                begin: 0.92,
+                                end: 1,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          '$_count',
+                          key: ValueKey<int>(_count),
+                          maxLines: 1,
+                          style: AppTypography.displayLg.copyWith(
+                            fontSize: 56,
+                            color: AdminColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
@@ -1806,9 +1847,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
-              onPressed: _busy ? null : _confirmReset,
+              onPressed: _busy || _counterSyncing || _pendingCounterDelta != 0
+                  ? null
+                  : _confirmReset,
               icon: const Icon(Icons.restart_alt_rounded, size: 18),
-              label: const Text('Reset count to 0'),
+              label: Text(l10n.t('resetCountToZero')),
               style: TextButton.styleFrom(
                 foregroundColor: AdminColors.error,
                 textStyle: AppTypography.labelMd.copyWith(
@@ -1851,7 +1894,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'YESTERDAY’S PARCHI',
+                        l10n.t('yesterdayParchi'),
                         style: AppTypography.labelSm.copyWith(
                           color: AdminColors.onSurfaceVariant,
                           fontSize: 9.5,
@@ -1860,7 +1903,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(height: 1),
                       Text(
-                        '${clinic.yesterdayParchiCount} parchi · '
+                        '${clinic.yesterdayParchiCount} ${l10n.t('slips')} · '
                         '${DateFormat('MMM d').format(_now.subtract(const Duration(days: 1)))}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1875,7 +1918,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 TextButton.icon(
                   onPressed: _busy ? null : () => _editYesterdayCount(clinic),
                   icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('Edit'),
+                  label: Text(l10n.t('edit')),
                   style: TextButton.styleFrom(
                     foregroundColor: AdminColors.primary,
                     textStyle: AppTypography.labelMd.copyWith(
@@ -1892,11 +1935,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildSessionPill() {
+    final l10n = AppLocalizations.of(context);
     final status = _session?.status ?? 'active';
     final (label, color) = switch (status) {
-      'paused' => ('Paused', const Color(0xFFD97706)),
-      'closed' => ('Closed', AdminColors.onSurfaceVariant),
-      _ => ('Live', AdminColors.primary),
+      'paused' => (l10n.t('paused'), const Color(0xFFD97706)),
+      'closed' => (l10n.t('offline'), AdminColors.onSurfaceVariant),
+      _ => (l10n.t('live'), AdminColors.primary),
     };
     return LiveStatusPill(
       label: label,
@@ -1946,9 +1990,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildIntakeTab() {
     final clinic = _clinic!;
+    final l10n = AppLocalizations.of(context);
     return _buildPage(
-      title: 'Intake History',
-      subtitle: 'DOCTOR CONSOLE • EASYCHECK',
+      title: l10n.t('intakeHistoryTitle'),
+      subtitle: '${l10n.t('doctorConsole')} • EASYCHECK',
       children: [
         StreamBuilder<List<QueueHistoryEntry>>(
           stream: _queueRepository.historyStream(clinic.clinicId, _dateKey),
@@ -1962,18 +2007,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             if (snapshot.hasError) {
               return _buildInfoCard(
                 icon: Icons.cloud_off_rounded,
-                title: 'History unavailable',
-                body: 'Could not load today’s intake history. Pull down to retry.',
+                title: l10n.t('historyUnavailable'),
+                body: l10n.t('couldNotLoadHistory'),
               );
             }
             final entries = snapshot.data ?? const <QueueHistoryEntry>[];
             if (entries.isEmpty) {
               return _buildInfoCard(
                 icon: Icons.history_rounded,
-                title: 'No activity yet',
-                body:
-                    'Counter updates and resets for today will appear here '
-                    'with a timestamp and audit trail.',
+                title: l10n.t('noCounterActivity'),
+                body: l10n.t('noCounterActivityBody'),
               );
             }
             return Column(
@@ -1986,6 +2029,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildHistoryTile(QueueHistoryEntry entry) {
+    final l10n = AppLocalizations.of(context);
     final (icon, color) = switch (entry.action) {
       'reset' => (Icons.restart_alt_rounded, AdminColors.error),
       'correction' => (Icons.edit_rounded, const Color(0xFFD97706)),
@@ -2018,7 +2062,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_actionLabel(entry.action)} · '
+                  '${_actionLabel(entry.action, l10n)} · '
                   '${entry.previousNumber} → ${entry.newNumber}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -2029,7 +2073,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'By ${_shortUid(entry.performedBy)}',
+                  l10n
+                      .t('byUser')
+                      .replaceAll('{user}', _shortUid(entry.performedBy)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSm.copyWith(
@@ -2051,10 +2097,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  String _actionLabel(String action) => switch (action) {
-    'reset' => 'Reset',
-    'correction' => 'Correction',
-    _ => 'Increment',
+  String _actionLabel(String action, AppLocalizations l10n) => switch (action) {
+    'reset' => l10n.t('resetAction'),
+    'correction' => l10n.t('correctionAction'),
+    _ => l10n.t('incrementAction'),
   };
 
   String _shortUid(String uid) {
@@ -2069,9 +2115,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildStaffTab() {
     final clinic = _clinic!;
+    final l10n = AppLocalizations.of(context);
     return _buildPage(
-      title: 'Clinic Staff',
-      subtitle: 'DOCTOR CONSOLE • EASYCHECK',
+      title: l10n.t('staffManagementTitle'),
+      subtitle: '${l10n.t('doctorConsole')} • EASYCHECK',
       children: [
         FutureBuilder<List<ClinicMembershipModel>>(
           future: _membersFuture,
@@ -2085,18 +2132,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             if (snapshot.hasError) {
               return _buildInfoCard(
                 icon: Icons.cloud_off_rounded,
-                title: 'Staff list unavailable',
-                body: 'Could not load clinic members. Pull down to retry.',
+                title: l10n.t('staffListUnavailable'),
+                body: l10n.t('couldNotLoadMembers'),
               );
             }
             final members = snapshot.data ?? const <ClinicMembershipModel>[];
             if (members.isEmpty) {
               return _buildInfoCard(
                 icon: Icons.group_add_outlined,
-                title: 'No staff assigned',
-                body:
-                    'Members added to ${clinic.name} will appear here with '
-                    'their role and permissions.',
+                title: l10n.t('noStaffAssigned'),
+                body: l10n
+                    .t('noTeamMembersBody')
+                    .replaceAll('{clinic}', clinic.name),
               );
             }
             return Column(
@@ -2111,6 +2158,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildMemberTile(ClinicMembershipModel member) {
+    final l10n = AppLocalizations.of(context);
     final active = member.isActive;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
@@ -2141,7 +2189,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _roleLabel(member.role),
+                  _roleLabel(member.role, l10n),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodyMd.copyWith(
@@ -2152,8 +2200,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 2),
                 Text(
                   member.permissions.isEmpty
-                      ? 'No permissions assigned'
-                      : member.permissions.map(_permissionLabel).join(' · '),
+                      ? l10n.t('noPermissionsAssigned')
+                      : member.permissions
+                            .map(
+                              (permission) =>
+                                  _permissionLabel(permission, l10n),
+                            )
+                            .join(' · '),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelSm.copyWith(
@@ -2165,7 +2218,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           const SizedBox(width: AppSpacing.spaceSm),
           LiveStatusPill(
-            label: active ? 'Active' : 'Inactive',
+            label: active ? l10n.t('active') : l10n.t('inactive'),
             foreground: active
                 ? AdminColors.onSecondaryContainer
                 : AdminColors.onSurfaceVariant,
@@ -2180,21 +2233,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  String _roleLabel(String role) => switch (role) {
-    'clinic_admin' => 'Clinic Admin',
-    'front_desk_lead' => 'Front Desk Lead',
-    'triage_coordinator' => 'Triage Coordinator',
-    _ => role.isEmpty ? 'Staff member' : role,
+  String _roleLabel(String role, AppLocalizations l10n) => switch (role) {
+    'clinic_admin' => l10n.t('roleClinicAdmin'),
+    'front_desk_lead' => l10n.t('roleFrontDeskLead'),
+    'triage_coordinator' => l10n.t('roleTriageCoordinator'),
+    _ => role.isEmpty ? l10n.t('staffMember') : role,
   };
 
-  String _permissionLabel(String permission) => switch (permission) {
-    'update_tally' => 'Counter',
-    'update_status' => 'Status',
-    'reset_tally' => 'Reset',
-    'manage_staff' => 'Staff',
-    'view_queue' => 'Queue',
-    _ => permission,
-  };
+  String _permissionLabel(String permission, AppLocalizations l10n) =>
+      switch (permission) {
+        'update_tally' => l10n.t('permissionCounter'),
+        'update_status' => l10n.t('permissionStatus'),
+        'reset_tally' => l10n.t('reset'),
+        'manage_staff' => l10n.t('staffTab'),
+        'view_queue' => l10n.t('permissionQueue'),
+        _ => permission,
+      };
 
   // ───────────────────────────────────────────────────────────────────────────
   // Clinic tab
@@ -2204,9 +2258,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final clinic = _clinic!;
     final user = _user;
     final membership = _membership;
+    final l10n = AppLocalizations.of(context);
     return _buildPage(
-      title: 'Clinic Profile',
-      subtitle: 'DOCTOR CONSOLE • EASYCHECK',
+      title: l10n.t('clinicProfileTitle'),
+      subtitle: '${l10n.t('doctorConsole')} • EASYCHECK',
       children: [
         _buildClinicPhotoCard(clinic),
         const SizedBox(height: AppSpacing.spaceMd),
@@ -2233,7 +2288,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Clinic ID · ${clinic.clinicId}',
+                '${l10n.t('clinicIdLabel')} · ${clinic.clinicId}',
                 style: AppTypography.labelSm.copyWith(
                   color: AdminColors.onSurfaceVariant,
                 ),
@@ -2241,27 +2296,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const Divider(height: AppSpacing.spaceXl),
               _buildInfoRow(
                 Icons.location_on_outlined,
-                'Address',
+                l10n.t('addressLabel'),
                 clinic.address.isEmpty
-                    ? 'Not listed'
+                    ? l10n.t('notListed')
                     : '${clinic.address}${clinic.city.isEmpty ? '' : ', ${clinic.city}'}',
               ),
               _buildInfoRow(
                 Icons.call_outlined,
-                'Phone',
-                clinic.phone.isEmpty ? 'Not listed' : clinic.phone,
+                l10n.t('phoneLabel'),
+                clinic.phone.isEmpty ? l10n.t('notListed') : clinic.phone,
               ),
               _buildInfoRow(
                 Icons.mail_outline_rounded,
-                'Email',
-                clinic.email.isEmpty ? 'Not listed' : clinic.email,
+                l10n.t('emailLabel'),
+                clinic.email.isEmpty ? l10n.t('notListed') : clinic.email,
               ),
               _buildInfoRow(
                 Icons.badge_outlined,
-                'Your role',
+                l10n.t('yourRoleLabel'),
                 membership == null
-                    ? 'Clinic administrator'
-                    : _roleLabel(membership.role),
+                    ? l10n.t('roleClinicAdmin')
+                    : _roleLabel(membership.role, l10n),
               ),
             ],
           ),
@@ -2278,7 +2333,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Signed-in account',
+                l10n.t('signedInAccountLabel'),
                 style: AppTypography.labelSm.copyWith(
                   color: AdminColors.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -2288,14 +2343,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Text(
                 user?.displayName?.trim().isNotEmpty == true
                     ? user!.displayName!
-                    : 'Clinic administrator',
+                    : l10n.t('roleClinicAdmin'),
                 style: AppTypography.bodyMd.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AdminColors.onSurface,
                 ),
               ),
               Text(
-                user?.email ?? 'Not available',
+                user?.email ?? l10n.t('notAvailable'),
                 style: AppTypography.bodySm.copyWith(
                   color: AdminColors.onSurfaceVariant,
                 ),
@@ -2306,7 +2361,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _signOut,
                   icon: const Icon(Icons.logout_rounded, size: 18),
-                  label: const Text('Sign out'),
+                  label: Text(l10n.t('signOut')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AdminColors.error,
                     side: BorderSide(
@@ -2321,7 +2376,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         const SizedBox(height: AppSpacing.spaceMd),
         Center(
           child: Text(
-            'EasyCheck Online · Version 1.0.0 (1)',
+            l10n.t('versionLabel'),
             style: AppTypography.labelSm.copyWith(
               color: AdminColors.onSurfaceVariant,
             ),
@@ -2397,12 +2452,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildErrorState() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         _buildInfoCard(
           icon: Icons.cloud_off_rounded,
-          title: 'Could not open the dashboard',
-          body: _error ?? 'Check your connection and try again.',
+          title: l10n.t('couldNotOpenDashboard'),
+          body: _error ?? l10n.t('checkConnection'),
         ),
         const SizedBox(height: AppSpacing.spaceLg),
         SizedBox(
@@ -2410,25 +2466,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: FilledButton.icon(
             onPressed: _loadClinic,
             icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: const Text('Retry'),
+            label: Text(l10n.t('retry')),
           ),
         ),
         const SizedBox(height: AppSpacing.spaceSm),
-        TextButton(onPressed: _signOut, child: const Text('Sign out')),
+        TextButton(onPressed: _signOut, child: Text(l10n.t('signOut'))),
       ],
     );
   }
 
   Widget _buildUnassignedState() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         _buildInfoCard(
           icon: Icons.admin_panel_settings_outlined,
-          title: 'Clinic access required',
-          body:
-              'Your Google account is signed in, but no active clinic '
-              'membership is available. Submit a clinic access request or ask '
-              'your clinic administrator to activate your membership.',
+          title: l10n.t('unassignedTitle'),
+          body: l10n.t('unassignedBody'),
         ),
         const SizedBox(height: AppSpacing.spaceLg),
         SizedBox(
@@ -2438,7 +2492,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Navigator.of(context)
                     .pushReplacementNamed(AppRoutes.adminAccessRequest),
             icon: const Icon(Icons.add_business_rounded, size: 18),
-            label: const Text('Request clinic access'),
+            label: Text(l10n.t('requestClinicAccess')),
           ),
         ),
         const SizedBox(height: AppSpacing.spaceSm),
@@ -2447,11 +2501,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: OutlinedButton.icon(
             onPressed: _loadClinic,
             icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: const Text('Check again'),
+            label: Text(l10n.t('checkAgain')),
           ),
         ),
         const SizedBox(height: AppSpacing.spaceSm),
-        TextButton(onPressed: _signOut, child: const Text('Sign out')),
+        TextButton(onPressed: _signOut, child: Text(l10n.t('signOut'))),
       ],
     );
   }
@@ -2517,8 +2571,9 @@ class _DoctorProfileDialogState extends State<_DoctorProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Edit doctor profile'),
+      title: Text(l10n.t('editDoctorProfile')),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -2531,14 +2586,14 @@ class _DoctorProfileDialogState extends State<_DoctorProfileDialog> {
                 autofocus: true,
                 textCapitalization: TextCapitalization.words,
                 inputFormatters: [LengthLimitingTextInputFormatter(80)],
-                decoration: const InputDecoration(
-                  labelText: 'Doctor name',
-                  hintText: 'Dr. Rajesh Kumar',
-                  prefixIcon: Icon(Icons.person_outline_rounded),
+                decoration: InputDecoration(
+                  labelText: l10n.t('doctorNameLabel'),
+                  hintText: l10n.t('doctorNameHint'),
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Enter the doctor name shown to patients.';
+                    return l10n.t('doctorNameRequired');
                   }
                   return null;
                 },
@@ -2548,10 +2603,10 @@ class _DoctorProfileDialogState extends State<_DoctorProfileDialog> {
                 controller: _credentialsController,
                 textCapitalization: TextCapitalization.characters,
                 inputFormatters: [LengthLimitingTextInputFormatter(120)],
-                decoration: const InputDecoration(
-                  labelText: 'Degree / qualifications',
-                  hintText: 'MBBS, MD (Medicine)',
-                  prefixIcon: Icon(Icons.school_outlined),
+                decoration: InputDecoration(
+                  labelText: l10n.t('credentialsLabel'),
+                  hintText: l10n.t('credentialsHint'),
+                  prefixIcon: const Icon(Icons.school_outlined),
                 ),
               ),
               const SizedBox(height: 12),
@@ -2559,16 +2614,15 @@ class _DoctorProfileDialogState extends State<_DoctorProfileDialog> {
                 controller: _specialtyController,
                 textCapitalization: TextCapitalization.words,
                 inputFormatters: [LengthLimitingTextInputFormatter(120)],
-                decoration: const InputDecoration(
-                  labelText: 'Specialty / designation',
-                  hintText: 'Consultant Cardiologist',
-                  prefixIcon: Icon(Icons.medical_services_outlined),
+                decoration: InputDecoration(
+                  labelText: l10n.t('specialtyLabel'),
+                  hintText: l10n.t('specialtyHint'),
+                  prefixIcon: const Icon(Icons.medical_services_outlined),
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                'These details appear on the patient home card and clinic page, '
-                'and update live.',
+                l10n.t('patientVisibilityNote'),
                 style: AppTypography.labelSm.copyWith(
                   color: AdminColors.onSurfaceVariant,
                   height: 1.4,
@@ -2581,9 +2635,9 @@ class _DoctorProfileDialogState extends State<_DoctorProfileDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.t('cancel')),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Save profile')),
+        FilledButton(onPressed: _submit, child: Text(l10n.t('saveProfile'))),
       ],
     );
   }

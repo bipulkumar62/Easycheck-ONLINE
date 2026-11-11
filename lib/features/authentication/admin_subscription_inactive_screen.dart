@@ -16,11 +16,7 @@ class AdminSubscriptionInactiveScreen extends StatelessWidget {
   final ClinicModel? clinic;
   final String? message;
 
-  const AdminSubscriptionInactiveScreen({
-    super.key,
-    this.clinic,
-    this.message,
-  });
+  const AdminSubscriptionInactiveScreen({super.key, this.clinic, this.message});
 
   User? get _user {
     try {
@@ -40,10 +36,8 @@ class AdminSubscriptionInactiveScreen extends StatelessWidget {
       // Still return to the role selection screen.
     }
     if (!context.mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   void _checkAgain(BuildContext context) {
@@ -61,8 +55,8 @@ class AdminSubscriptionInactiveScreen extends StatelessWidget {
     final body = message?.trim().isNotEmpty == true
         ? message!.trim()
         : 'This clinic is offline because its subscription is inactive. '
-            'Queue controls and staff changes are paused until the network '
-            'administrator enables the clinic again.';
+              'Queue controls and staff changes are paused until the network '
+              'administrator enables the clinic again.';
 
     return AdminAuthShell(
       title: 'Subscription Inactive',
@@ -121,10 +115,7 @@ class AdminSubscriptionInactiveScreen extends StatelessWidget {
               backgroundColor: AdminColors.primary,
               foregroundColor: AdminColors.onPrimary,
               minimumSize: const Size.fromHeight(50),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -146,10 +137,7 @@ class AdminSubscriptionInactiveScreen extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: AdminColors.secondary,
               minimumSize: const Size.fromHeight(48),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               side: BorderSide(
                 color: AdminColors.secondary.withValues(alpha: 0.35),
               ),

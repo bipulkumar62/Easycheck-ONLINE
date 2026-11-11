@@ -20,7 +20,10 @@ class QueueSessionModel {
   });
 
   /// Create from Firestore document snapshot.
-  factory QueueSessionModel.fromDocument(Map<String, dynamic> data, String documentId) {
+  factory QueueSessionModel.fromDocument(
+    Map<String, dynamic> data,
+    String documentId,
+  ) {
     final parts = documentId.split('_');
     return QueueSessionModel(
       clinicId: parts.first,

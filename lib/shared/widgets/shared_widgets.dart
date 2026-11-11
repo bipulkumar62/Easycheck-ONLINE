@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easycheck_online/app/theme/app_colors.dart';
 import 'package:easycheck_online/app/theme/app_typography.dart';
 import 'package:easycheck_online/app/theme/app_spacing.dart';
+
 import '../../core/widgets/live_dot.dart';
 
 class LiveStatusPill extends StatelessWidget {
@@ -29,11 +30,7 @@ class LiveStatusPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          LiveDot(
-            size: 6,
-            color: dotColor,
-            semanticsLabel: label,
-          ),
+          LiveDot(size: 6, color: dotColor, semanticsLabel: label),
           const SizedBox(width: 2),
           Text(
             label,
@@ -62,11 +59,7 @@ class LivePulseDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LiveDot(
-      size: size,
-      color: color,
-      pulse: animate,
-    );
+    return LiveDot(size: size, color: color, pulse: animate);
   }
 }
 
@@ -105,9 +98,11 @@ class StatusButton extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon,
-                  color: isActive ? activeColor : AdminColors.onSurfaceVariant,
-                  size: 24.0),
+              Icon(
+                icon,
+                color: isActive ? activeColor : AdminColors.onSurfaceVariant,
+                size: 24.0,
+              ),
               const SizedBox(height: 3.0),
               Text(
                 label,

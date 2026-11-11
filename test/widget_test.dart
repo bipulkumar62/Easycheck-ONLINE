@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easycheck_online/app/app.dart';
+import 'package:easycheck_online/app/localization/locale_controller.dart';
 import 'package:easycheck_online/app/routes/app_routes.dart';
 import 'package:easycheck_online/app/theme/app_theme.dart';
 import 'package:easycheck_online/features/admin/admin_dashboard_screen.dart';
@@ -42,11 +43,37 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(
-        find.text('Aap kis roop mein continue karna chahte hain?'),
+        find.text('How would you like to continue?'),
         findsOneWidget,
       );
       expect(find.text('Continue as Patient'), findsOneWidget);
       expect(find.text('Continue as Doctor/Staff'), findsOneWidget);
+    });
+
+    testWidgets('language toggle switches the role screen to Hindi and back', (
+      WidgetTester tester,
+    ) async {
+      addTearDown(() async {
+        await LocaleController.instance.setLocale(const Locale('en'));
+      });
+
+      await tester.pumpWidget(const EasyCheckApp());
+      await tester.pump(const Duration(milliseconds: 500));
+
+      await tester.tap(find.text('हिं'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.text('आप किस रूप में आगे बढ़ना चाहते हैं?'),
+        findsOneWidget,
+      );
+      expect(find.text('मरीज़ के रूप में आगे बढ़ें'), findsOneWidget);
+
+      await tester.tap(find.text('EN'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('How would you like to continue?'), findsOneWidget);
+      expect(find.text('Continue as Patient'), findsOneWidget);
     });
 
     testWidgets('patient role opens the patient Google login', (

@@ -98,14 +98,24 @@ class AppSnackBar {
         lower.contains('not active') ||
         lower.contains('expired') ||
         lower.contains('error') ||
-        lower.contains('unable');
+        lower.contains('unable') ||
+        message.contains('नहीं') ||
+        message.contains('विफल') ||
+        message.contains('त्रुटि') ||
+        message.contains('गलती');
     final isSuccess =
         lower.contains('updated') ||
         lower.contains('saved') ||
         lower.contains('reset') ||
         lower.contains('deleted') ||
         lower.contains('created') ||
-        lower.contains('sent');
+        lower.contains('sent') ||
+        message.contains('अपडेट') ||
+        message.contains('सहेजा') ||
+        message.contains('रीसेट') ||
+        message.contains('हटाया') ||
+        message.contains('बनाया') ||
+        message.contains('भेजा');
     show(
       context,
       message,

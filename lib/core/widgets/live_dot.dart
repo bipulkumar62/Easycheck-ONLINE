@@ -23,8 +23,7 @@ class LiveDot extends StatefulWidget {
   State<LiveDot> createState() => _LiveDotState();
 }
 
-class _LiveDotState extends State<LiveDot>
-    with SingleTickerProviderStateMixin {
+class _LiveDotState extends State<LiveDot> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _haloOpacity;
 
@@ -35,9 +34,10 @@ class _LiveDotState extends State<LiveDot>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    _haloOpacity = Tween<double>(begin: 0.28, end: 0.02).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _haloOpacity = Tween<double>(
+      begin: 0.28,
+      end: 0.02,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     // MediaQuery is not available in initState; the animation starts in
     // didChangeDependencies, which runs before the first frame.
   }

@@ -601,11 +601,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF041A33),
-            Color(0xFF073B78),
-            Color(0xFF0A4A8A),
-          ],
+          colors: [Color(0xFF041A33), Color(0xFF073B78), Color(0xFF0A4A8A)],
           stops: [0.0, 0.6, 1.0],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -1100,17 +1096,13 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           const SizedBox(height: AppSpacing.spaceMd),
           Text(
-            hasSearch
-                ? l10n.t('noClinicsMatch')
-                : l10n.t('noClinicsAvailable'),
+            hasSearch ? l10n.t('noClinicsMatch') : l10n.t('noClinicsAvailable'),
             textAlign: TextAlign.center,
             style: AppTypography.titleMd,
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
-            hasSearch
-                ? l10n.t('tryDifferentSearch')
-                : l10n.t('pullToRefresh'),
+            hasSearch ? l10n.t('tryDifferentSearch') : l10n.t('pullToRefresh'),
             textAlign: TextAlign.center,
             style: AppTypography.bodySm.copyWith(
               color: PatientColors.onSurfaceVariant,
@@ -1130,7 +1122,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     return SafeArea(
       child: Column(
         children: [
-          _buildSimpleHeader(l10n.t('navMyClinics'), Icons.local_hospital_rounded),
+          _buildSimpleHeader(
+            l10n.t('navMyClinics'),
+            Icons.local_hospital_rounded,
+          ),
           Expanded(
             child: Center(
               child: ConstrainedBox(
@@ -2119,10 +2114,9 @@ class _ClinicCard extends StatelessWidget {
           const SizedBox(width: 5),
           Flexible(
             child: Text(
-              l10n.t('todaysParchiCountLabel').replaceAll(
-                '{count}',
-                '$parchiCount',
-              ),
+              l10n
+                  .t('todaysParchiCountLabel')
+                  .replaceAll('{count}', '$parchiCount'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.labelSm.copyWith(

@@ -38,7 +38,10 @@ class ClinicMembershipModel {
   ];
 
   /// Create from Firestore document snapshot.
-  factory ClinicMembershipModel.fromDocument(Map<String, dynamic> data, String documentId) {
+  factory ClinicMembershipModel.fromDocument(
+    Map<String, dynamic> data,
+    String documentId,
+  ) {
     final parts = documentId.split('_');
     return ClinicMembershipModel(
       userId: parts.first,

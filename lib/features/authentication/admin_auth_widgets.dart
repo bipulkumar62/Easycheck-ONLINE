@@ -220,9 +220,7 @@ class AdminStatusCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: iconBackground,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: iconColor.withValues(alpha: 0.16),
-                ),
+                border: Border.all(color: iconColor.withValues(alpha: 0.16)),
                 boxShadow: [
                   BoxShadow(
                     color: iconColor.withValues(alpha: 0.10),
@@ -289,10 +287,7 @@ class AdminStatusCard extends StatelessWidget {
               height: 1.5,
             ),
           ),
-          if (footer != null) ...[
-            const SizedBox(height: 20),
-            footer!,
-          ],
+          if (footer != null) ...[const SizedBox(height: 20), footer!],
         ],
       ),
     );

@@ -56,7 +56,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeContinueSession());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _maybeContinueSession(),
+    );
   }
 
   /// Reuse an existing Firebase session instead of asking clinic staff to pick
@@ -124,10 +126,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   void _backToRoleSelection() {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.initial,
-      (route) => false,
-    );
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
   }
 
   @override
@@ -896,18 +896,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   void _openLegal(LegalDocument document) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => LegalScreen(document: document),
-      ),
+      MaterialPageRoute<void>(builder: (_) => LegalScreen(document: document)),
     );
   }
 
   Widget _buildBackButton() {
     return Material(
       color: _ap_surfaceContainerLowest,
-      shape: const CircleBorder(
-        side: BorderSide(color: _ap_border),
-      ),
+      shape: const CircleBorder(side: BorderSide(color: _ap_border)),
       elevation: 0,
       child: IconButton(
         tooltip: AppLocalizations.of(context).t('backToRoleSelection'),
@@ -928,9 +924,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       decoration: BoxDecoration(
         color: _ap_errorContainer.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _ap_onErrorContainer.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: _ap_onErrorContainer.withValues(alpha: 0.18)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -960,9 +954,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );
@@ -1063,4 +1055,3 @@ class _AdminGridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
