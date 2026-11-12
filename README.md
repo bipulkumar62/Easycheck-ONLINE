@@ -688,12 +688,17 @@ Follow `project_docs/phase_24_production_hardening/PRODUCTION_HARDENING.md` for 
 ## 🤝 Contributing
 
 1. Create a feature branch.
-2. Read the repository change-safety documents before editing:
+2. Read the repository change-safety and architecture documents before editing:
+   - [`ARCHITECTURE.md`](ARCHITECTURE.md)
+   - [`SYSTEM-DESIGN.md`](SYSTEM-DESIGN.md)
    - [`SAFE-CHANGE-RULES.md`](SAFE-CHANGE-RULES.md)
    - [`CHANGE-SCOPE.md`](CHANGE-SCOPE.md)
    - [`IMPACT-MAP.md`](IMPACT-MAP.md)
    - [`COLD-PATHS.md`](COLD-PATHS.md)
    - [`ENV-CONTRACTS.md`](ENV-CONTRACTS.md)
+   - [`STALE-SESSION.md`](STALE-SESSION.md)
+   - [`MULTI-TAB-CONFLICT.md`](MULTI-TAB-CONFLICT.md)
+   - [`SOFT-DELETE-CONSISTENCY.md`](SOFT-DELETE-CONSISTENCY.md)
 3. Keep clinic authorization enforced by Firestore rules and trusted backend code.
 4. Do not add secrets or privileged keys to client code.
 5. Run:

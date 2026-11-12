@@ -38,6 +38,12 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // The app UI is localized in Dart (English and Hindi only). Strip the
+        // locale resources bundled by AndroidX/Firebase/plugins so Play's
+        // automatic app-string translation does not try to translate unused
+        // languages such as Gujarati, Icelandic, Indonesian, Korean, Malayalam,
+        // Norwegian, Thai or Ukrainian.
+        resourceConfigurations += listOf("en", "hi")
     }
 
     signingConfigs {
