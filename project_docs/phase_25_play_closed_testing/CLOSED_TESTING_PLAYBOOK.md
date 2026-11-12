@@ -25,37 +25,55 @@ compliant path is to run the closed test.
 Do these **before** inviting testers. If Google Sign-In fails, the 14-day window is
 wasted because testers cannot use the app.
 
-### 2.1 Add the Play App Signing SHA-1 to Firebase
+### 2.1 Register all three Play app-signing fingerprints
 
-Play installs are signed by Google's **app signing key**, not the upload key that signs
-the local AAB. Firebase currently has only these fingerprints:
+Play installs are signed by Google's **app signing keys**, not the upload key that signs
+the local AAB. New apps use **quantum-ready hybrid signing**, so the Play Console
+publishes **three app signing keys**:
 
-| Fingerprint | Purpose |
+| Key | SHA-1 |
 |---|---|
-| `D7:12:DF:89:04:C7:DE:09:D3:CD:2D:C8:0A:C6:37:85:27:F1:C4:31` | Upload/release key |
-| `65:B4:62:EA:69:9E:65:F7:20:FF:75:B0:6A:E5:9B:EE:DD:D5:1A:57` | Debug key |
+| Play app signing key 1 | `35:67:87:04:3D:3E:50:FA:CA:2A:5D:3F:CF:30:42:04:8A:C7:A0:F7` |
+| Play app signing key 2 | `03:F8:7F:8E:50:CC:69:DF:1C:C1:80:8F:C9:07:93:39:A0:A0:62:E2` |
+| Play app signing key 3 | `32:D3:D2:5B:6A:9E:64:E5:7F:F1:99:53:6F:79:E6:C6:63:41:4F:83` |
 
-Steps:
+The Play Console labels the three keys by signing role; the order shown can differ,
+so register **every** SHA-1 listed under **App signing key**. Google's Play App
+Signing documentation requires **all three** fingerprints to be registered with API
+providers. All three were added to Firebase on **12 November
+2026**, together with the existing upload and debug keys:
 
-1. Play Console → **Test and release → Setup → App integrity → App signing**.
-2. Copy the **SHA-1** under **App signing key certificate**.
-3. Add it to Firebase:
-   - Firebase Console → **Project settings → Your apps → Easycheck ONLINE (Android)**.
-   - **Add fingerprint** → paste the SHA-1 → **Save**.
-   - Download the updated `google-services.json`.
-   - Replace `android/app/google-services.json` in this repository.
-4. Rebuild the bundle: `flutter build appbundle --release`.
-5. Upload the new bundle to closed testing.
-6. Install from the Play testing link on a real phone and confirm Google Sign-In works.
+| Fingerprint | Purpose | Status |
+|---|---|---|
+| `D7:12:DF:89:04:C7:DE:09:D3:CD:2D:C8:0A:C6:37:85:27:F1:C4:31` | Upload/release key | ✅ Registered |
+| `65:B4:62:EA:69:9E:65:F7:20:FF:75:B0:6A:E5:9B:EE:DD:D5:1A:57` | Debug key | ✅ Registered |
+| `35:67:87:04:…:A0:F7` | Play app signing key 1 | ✅ Registered |
+| `03:F8:7F:8E:…:62:E2` | Play app signing key 2 | ✅ Registered |
+| `32:D3:D2:5B:…:4F:83` | Play app signing key 3 | ✅ Registered |
 
-> The CLI can add the fingerprint and download the config:
+Steps to verify or repeat:
+
+1. Play Console → **Protected with Play → Play Store protection → Manage Play app signing**
+   (older consoles: **Test and release → Setup → App integrity → App signing**).
+2. Scroll to **App signing key** and copy the **SHA-1** for each of the three keys.
+3. Add each SHA-1 in Firebase Console → **Project settings → Your apps → Easycheck
+   ONLINE (Android)** → **Add fingerprint** → **Save**.
+4. Download the updated `google-services.json` and replace
+   `android/app/google-services.json` in this repository.
+5. Rebuild: `flutter build appbundle --release`.
+6. Upload the new bundle to closed testing.
+7. Install from the Play testing link on a real phone and confirm Google Sign-In works.
+
+> CLI equivalent:
 >
 > ```powershell
-> firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 <PLAY_SHA1> --project easycheck-online
+> firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 35:67:87:04:3D:3E:50:FA:CA:2A:5D:3F:CF:30:42:04:8A:C7:A0:F7 --project easycheck-online
+> firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 03:F8:7F:8E:50:CC:69:DF:1C:C1:80:8F:C9:07:93:39:A0:A0:62:E2 --project easycheck-online
+> firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 32:D3:D2:5B:6A:9E:64:E5:7F:F1:99:53:6F:79:E6:C6:63:41:4F:83 --project easycheck-online
 > firebase apps:sdkconfig android 1:1085858861836:android:f6c366f51fe48bac61ef29 --project easycheck-online > android/app/google-services.json
 > ```
 >
-> Rebuild and re-upload after downloading the new config.
+> Run these one at a time; parallel Firebase CLI calls can crash on Windows.
 
 ### 2.2 Version code
 
@@ -194,7 +212,7 @@ After **14 continuous days with at least 12 opted-in testers**:
 |---|---|
 | Testers only sideload the APK | They must install from the Play testing link so Play records the opt-in |
 | Tester opts out or uninstalls permanently | Keep 15–20 testers and check the count daily |
-| Google Sign-In fails on Play builds | Add the Play App Signing SHA-1 to Firebase before inviting testers |
+| Google Sign-In fails on Play builds | Register all three Play app-signing SHA-1s in Firebase before inviting testers |
 | Reviewer cannot access the admin dashboard | Provision a real clinic membership and document the steps |
 | Data safety says "no data collected" | Declare Crashlytics, App Check, account data and queue activity |
 | Same version code uploaded twice | Increment `version` in `pubspec.yaml` for every upload |
@@ -203,15 +221,20 @@ After **14 continuous days with at least 12 opted-in testers**:
 
 ---
 
-## 7. Current artifact
+## 7. Current artifacts
 
 | Artifact | Value |
 |---|---|
 | Closed-test bundle | `build/app/outputs/bundle/release/app-release.aab` |
+| Bundle size | 60,901,272 bytes |
+| Bundle SHA-256 | `F3096FBC3A8994DD956020713F78D48359292127FBB108D58A8DC9C047B78A74` |
+| Direct-install APK | `build/app/outputs/flutter-apk/app-release.apk` |
+| APK size | 60,608,718 bytes |
+| APK SHA-256 | `775F8DFC4BD5B44BCDA169869B961A542299222D2E01BED97CBD33ACC9DA4D75` |
 | Version | `1.0.1+2` |
-| Size | 60,901,268 bytes |
-| SHA-256 | `772C1289397237943C79499A949BC86D45256FBD24F67DF4AAAF4CF02EC2CAF1` |
 | Signing certificate | Upload key `D7:12:DF:89:04:C7:DE:09:D3:CD:2D:C8:0A:C6:37:85:27:F1:C4:31` |
 
-> **Do not upload this bundle until the Play App Signing SHA-1 has been added to
-> Firebase and the bundle has been rebuilt with the updated `google-services.json`.**
+Both artifacts were rebuilt on **12 November 2026** after `google-services.json` was
+regenerated with all three Play app-signing SHA-1s. The bundle is ready to upload to
+closed testing. After installation from Play, verify Google Sign-In on a real phone
+before inviting all testers.

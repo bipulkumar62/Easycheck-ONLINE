@@ -29,7 +29,7 @@
 
 | Artifact | Path | Size |
 |----------|------|------|
-| Play Store upload bundle | `build/app/outputs/bundle/release/app-release.aab` | 60,901,268 bytes (58.1 MB) |
+| Play Store upload bundle | `build/app/outputs/bundle/release/app-release.aab` | 60,901,272 bytes (58.1 MB) |
 | Direct-install release APK | `build/app/outputs/flutter-apk/app-release.apk` | 60,608,718 bytes (57.8 MB) |
 | Debug APK | `build/app/outputs/flutter-apk/app-debug.apk` | — |
 
@@ -40,14 +40,22 @@ CN=EasyCheck Online, OU=Mobile, O=EasyCheck Online, L=Lahore, ST=Punjab, C=PK
 SHA-1: d712df8904c7de09d3cd2dc80ac6378527f1c431
 ```
 
-`google-services.json` currently contains only the release (upload) SHA-1 and the debug SHA-1. New apps must use **Play App Signing**, so Play-installed builds are signed by Google's app-signing key instead. The Play App Signing SHA-1 **must** be added to Firebase and the AAB rebuilt before testers install from Play, otherwise Google Sign-In fails with a configuration error.
+New apps use **Play App Signing**, so Play-installed builds are signed by Google's app-signing keys, not the upload key. The app uses **quantum-ready hybrid signing**, which publishes three app signing keys. All three SHA-1 fingerprints were registered in Firebase on 12 November 2026:
+
+| Key | SHA-1 |
+|-----|-------|
+| Play app signing key 1 | `35:67:87:04:3D:3E:50:FA:CA:2A:5D:3F:CF:30:42:04:8A:C7:A0:F7` |
+| Play app signing key 2 | `03:F8:7F:8E:50:CC:69:DF:1C:C1:80:8F:C9:07:93:39:A0:A0:62:E2` |
+| Play app signing key 3 | `32:D3:D2:5B:6A:9E:64:E5:7F:F1:99:53:6F:79:E6:C6:63:41:4F:83` |
+
+The upload key (`D7:12:DF:…`) and debug key (`65:B4:62:…`) remain registered. `google-services.json` was regenerated and both artifacts were rebuilt after registration.
 
 Current bundle fingerprints:
 
 | Artifact | SHA-256 |
 |----------|---------|
-| `app-release.aab` | `772C1289397237943C79499A949BC86D45256FBD24F67DF4AAAF4CF02EC2CAF1` |
-| `app-release.apk` | `16A06FB928D62B20107C116481CDAAD309F308BD575E671251C45CA5C9A5BB2D` |
+| `app-release.aab` | `F3096FBC3A8994DD956020713F78D48359292127FBB108D58A8DC9C047B78A74` |
+| `app-release.apk` | `775F8DFC4BD5B44BCDA169869B961A542299222D2E01BED97CBD33ACC9DA4D75` |
 
 The keystore and `key.properties` are gitignored and are **not** inside the APK/AAB.
 
@@ -61,10 +69,12 @@ flutter build appbundle --release
 flutter build apk --release
 ```
 
-After adding the Play App Signing SHA-1:
+All three Play app-signing SHA-1s are already registered. If the signing keys rotate, repeat:
 
 ```powershell
-firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 <PLAY_SHA1> --project easycheck-online
+firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 <PLAY_SHA1_KEY_1> --project easycheck-online
+firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 <PLAY_SHA1_KEY_2> --project easycheck-online
+firebase apps:android:sha:create 1:1085858861836:android:f6c366f51fe48bac61ef29 <PLAY_SHA1_KEY_3> --project easycheck-online
 firebase apps:sdkconfig android 1:1085858861836:android:f6c366f51fe48bac61ef29 --project easycheck-online > android/app/google-services.json
 flutter build appbundle --release
 ```
@@ -223,8 +233,8 @@ No location, camera, microphone, contacts, SMS or external-storage permission is
 
 ### Before upload
 
-- [ ] Add the **Play App Signing SHA-1** to the Firebase Android app.
-- [ ] Download the regenerated `google-services.json` and rebuild the AAB.
+- [x] Register all three Play app-signing SHA-1s (quantum-ready hybrid signing) in Firebase.
+- [x] Regenerate `google-services.json` and rebuild the AAB.
 - [ ] Upload `app-release.aab` (`1.0.1+2`) to closed testing.
 - [ ] Re-test Google Sign-In from the Play-installed build, not only the local release APK.
 - [ ] Increment `version` in `pubspec.yaml` for every future upload.
@@ -282,9 +292,10 @@ No location, camera, microphone, contacts, SMS or external-storage permission is
 
 ## 12. Remaining Blockers
 
+Resolved on 12 November 2026: all three Play app-signing SHA-1s are registered in Firebase and both artifacts were rebuilt with the updated config.
+
 | Blocker | Owner | Notes |
 |---------|-------|-------|
-| Play App Signing SHA-1 in Firebase | Release owner | Google Sign-In fails on Play-installed builds without it |
 | Closed test (12 testers, 14 days) | Release owner | Calendar-bound; earliest production application ~26 November 2026 if testers start 12 November 2026 |
 | Reviewer test account + clinic membership | Release owner | Required for Play review |
 | Data safety and content rating | Release owner | Complete in Play Console |
@@ -296,4 +307,4 @@ No location, camera, microphone, contacts, SMS or external-storage permission is
 
 ## 13. Verdict
 
-The app is **ready for closed testing**, not yet eligible for production. The rejection is the new personal-account testing gate, not a code defect. Before inviting testers, add the Play App Signing SHA-1 to Firebase and rebuild the AAB so Google Sign-In works on Play-installed builds. The legal pages, patient web app and Super Admin site are live, the release bundle is signed, and no private keys or environment files are bundled.
+The app is **ready to upload to closed testing**, not yet eligible for production. The rejection is the new personal-account testing gate, not a code defect. All three Play app-signing SHA-1s are registered in Firebase, `google-services.json` was regenerated, and both artifacts were rebuilt so Google Sign-In works on Play-installed builds. The legal pages, patient web app and Super Admin site are live, the release bundle is signed, and no private keys or environment files are bundled. The remaining work is the 12-tester/14-day closed test, reviewer access provisioning, and the Play Console forms.

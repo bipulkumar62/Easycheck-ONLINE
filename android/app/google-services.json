@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1085858861836-4jord0g6pjacigjc7inrkvpfn9l7qv6p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easycheck.online.easycheck_online",
+            "certificate_hash": "356787043d3e50faca2a5d3fcf3042048ac7a0f7"
+          }
+        },
+        {
           "client_id": "1085858861836-ennalcces4h77v9g2f2i23f8ve9eh5hm.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -28,6 +36,22 @@
           "android_info": {
             "package_name": "com.easycheck.online.easycheck_online",
             "certificate_hash": "65b462ea699e65f720ff75b06ae59beeddd51a57"
+          }
+        },
+        {
+          "client_id": "1085858861836-pd9jrdmbpvtbnn7pts5c7q49973emn48.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easycheck.online.easycheck_online",
+            "certificate_hash": "03f87f8e50cc69df1cc1808fc9079339a0a062e2"
+          }
+        },
+        {
+          "client_id": "1085858861836-pic54103b3ve9hhe068jkebsfs6srjvi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.easycheck.online.easycheck_online",
+            "certificate_hash": "32d3d25b6a9e64e57ff199536f79e6c663414f83"
           }
         },
         {
