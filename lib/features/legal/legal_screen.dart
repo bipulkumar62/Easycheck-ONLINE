@@ -91,7 +91,7 @@ class LegalScreen extends StatelessWidget {
                             const SizedBox(height: 24),
                             Text(
                               'EasyCheck Online · ${_isPrivacy ? 'Privacy Policy' : 'Terms of Use'} · '
-                              'Last updated 5 November 2026',
+                              'Last updated 12 November 2026',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'Inter',
